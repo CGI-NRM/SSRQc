@@ -1,16 +1,19 @@
 Package: SSRqc
-Title: What the Package Does (One Line, Title Case)
+Title: Quality Assessment of SSR Data From Brown Bear
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Thomas",
+           family = "Källman",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+           email = "thomas.kallman@nrm.se")
+Description: This package contains a small number of functions used to
+    perform quality control of SSR data as well as extraction of data
+    from replicate runs.
+License: `use_gpl3_license()`
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
+Imports:
+	readxl,
+	readODS
