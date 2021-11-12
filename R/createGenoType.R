@@ -6,6 +6,9 @@
 #' same name after removing the tail part of the original name. Eg. if
 #' replicates are named SEP1000001_mix1_rep1, SEP1000001_mix1_rep2 etc
 #' the sample name will be SEP1000001.
+#' NB! The naming used for loci in this implementation assumes that
+#' there are spaces in the names. Hence the need to modify the names
+#' with the replacement of "..." with ".".
 #'
 #' @return a list of three dataframes: Genotypes, QC and number of
 #' missing data points
@@ -27,7 +30,6 @@ createGT <- function(file = file, locus = c("Locus1", "Locus2")) {
                                             replacement = ".",
                                             fixed = TRUE),
                                        "max")
-        #indDataMax <- indDataMax[, grepl(".2max", names(indDataMax))]
         indDataMin <- aggregate(platta1, by = list(platta$names),
                                 min_mod)
         row.names(indDataMin) <- indDataMin$Group.1
@@ -36,9 +38,7 @@ createGT <- function(file = file, locus = c("Locus1", "Locus2")) {
                                             replacement = ".",
                                             fixed = TRUE),
                                        "min")
-        #indDataMin <- indDataMin[, grepl(".1min", names(indDataMin))]
         indData <- cbind(indDataMin, indDataMax)
-        #indData <- indData[,order(colnames(indData))]
         QC <- lapply(locus, qc_rep, data = indData)
         QC <- as.data.frame(do.call(cbind, QC))
         colnames(QC) <- paste(locus, ".QC", sep = "")
