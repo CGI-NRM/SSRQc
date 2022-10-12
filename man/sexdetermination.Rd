@@ -4,7 +4,10 @@
 \alias{sexdetermination}
 \title{Determine sex from genotype data}
 \usage{
-sexdetermination(data = data, locus = c("Male", "UaY15020", "UarY369.4"))
+sexdetermination(
+  data = data,
+  locus = c("Male", "UaY15020", "UarY369.4", "Y318.2", "SMCY")
+)
 }
 \arguments{
 \item{data}{a dataframe with genotype results}

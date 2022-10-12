@@ -2,5 +2,7 @@
 
 export(LoadData)
 export(MergePlate)
+export(MergePlateS)
 export(MergePlateSum)
 export(createGT)
+import(readxl)

@@ -23,9 +23,9 @@
 
 createGT <- function(file = file, locus = c("Locus1", "Locus2")) {
     platta <- LoadData(file)
-    if(!is.null(platta)) {
+    if(!is.null(platta) {
         platta$names <- ExtractNames(platta[,1])
-        togrep <- paste(locus,collapse="|")
+        togrep <- paste(locus, collapse="|")
         platta1 <- platta[,grepl(togrep, names(platta))]
         
         indDataMax <- stats::aggregate(platta1, by = list(platta$names),
@@ -59,10 +59,12 @@ createGT <- function(file = file, locus = c("Locus1", "Locus2")) {
                     gt.missing = rowSums(is.na(gt)))
         return(res)
     } else {
-        cat("")
+        cat("There is no data from specified loci in the given file\n")
+        return(NULL)
     }
     
 }
+
 
 #' Determine sex from genotype data
 #' 
@@ -88,11 +90,18 @@ createGT <- function(file = file, locus = c("Locus1", "Locus2")) {
 #' 4. The Male marker is better as the y-chromosome markers can not separate failed from female.
 #' @param data a dataframe with genotype results
 #' @return list with input data plus QC score and a vector with most likely sex
-sexdetermination <- function(data = data, locus = c("Male", "UaY15020", "UarY369.4")) {
-    genSexOrg <- rep("NA", nrow(data))
-    genSexUay <- rep("NA", nrow(data))
-    genSexUar <- rep("NA", nrow(data))
-    if("Male" %in% locus) {
+sexdetermination <- function(data = data, locus = c("Male",
+                                                    "UaY15020",
+                                                    "UarY369.4",
+                                                    "Y318.2",
+                                                    "SMCY")) {
+    genSexOrg  <- rep(NA, nrow(data))
+    genSexUay  <- rep(NA, nrow(data))
+    genSexUar  <- rep(NA, nrow(data))
+    genSexY    <- rep(NA, nrow(data))
+    genSexSMCY <- rep(NA, nrow(data))
+
+    if(any(grepl("Male", colnames(data)))) {
         ResOrg <- data[,grepl("Male", names(data))]
         ResOrg$merge <- paste(ResOrg[,1], ResOrg[,2])
         genSexOrg <- ifelse(ResOrg$merge == "NA 152"  |
@@ -107,23 +116,46 @@ sexdetermination <- function(data = data, locus = c("Male", "UaY15020", "UarY369
                                         no = NA))
         
     }
-    if("UaY15020" %in% locus) {
-        ResUay <- data[,grepl("UaY", names(data))]
+    if(any(grepl("UaY15020", colnames(data)))) {
+        ResUay    <- data[,grepl("UaY", names(data))]
         genSexUay <- ifelse(is.na(ResUay[,1]),
-                            yes = "Hona",
-                            no = "Hane")
+                            yes = NA,
+                            no  = "Hane")
     }
     
-    if("UarY369.4" %in% locus) {
-        ResUar <- data[,grepl("Uar", names(data))]
+    if(any(grepl("UarY369.4", colnames(data)))) {
+        ResUar    <- data[,grepl("Uar", names(data))]
         genSexUar <- ifelse(is.na(ResUar[,1]),
-                            yes = "Hona",
-                            no = "Hane")
+                            yes = NA,
+                            no  = "Hane")
     }
-    genSex <- data.frame(genSexOrg, genSexUar, genSexUay)
+    if(any(grepl("Y318.2", colnames(data)))) {
+        ResY <- data[, grepl("ZFX", names(data))]
+        ResY <- cbind(ResY, data[, grepl("318.2", names(data))])  
+        ResY$merge <- paste(ResY[,1], ResY[,3])
+        genSexY <- ifelse(ResY$merge == "NA 160"  |
+                          ResY$merge == "160 NA",
+                          yes = "Hona",
+                          no  = ifelse(ResY$merge == "NA NA",
+                                       yes = NA,
+                                       no  = "Hane"))
+    }
+    if(any(grepl("SMCY", colnames(data)))) {
+        ResSMCY    <- data[,grepl("SMCY", names(data))]
+        genSexSMCY <- ifelse(is.na(ResSMCY[,1]),
+                            yes = NA,
+                            no  = "Hane")
+    }
+    genSex <- data.frame(genSexOrg, genSexUar, genSexUay, genSexY, genSexSMCY)
     sexQC <- function(vec) {
-        all(vec == vec[1])
-    }
+        if(all(is.na(vec))) {
+            NA
+        } else {        
+        vec2 <- na.omit(vec)
+        tt <- all(vec2 == vec2[1], na.rm = TRUE)
+        ifelse(tt, yes = "OK", no = "Check!")
+        }
+        }
     QC <- unlist(apply(genSex, MARGIN = 1, sexQC))
     consensusExtract <- function(vec) {
         names(sort(table(factor(vec)), decreasing = TRUE))[1]
@@ -137,5 +169,4 @@ sexdetermination <- function(data = data, locus = c("Male", "UaY15020", "UarY369
     rownames(consensus) <- rownames(data)
     return(list(QC = genSex,
                 Genotypes = consensus))
-}
-    
+} 

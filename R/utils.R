@@ -7,6 +7,7 @@
 #' @param naStrings entries should be converted to NA values on import
 #' __NB! The function uses file endings to guess file formats. Will not work if file ending__
 #' __is not consistent with actual file type__
+#' @import readxl
 #' @export
 LoadData <- function(filePath, sheet = 1, naStrings = c("NA", "-99", "0", "000", "No peaks in locus", "No peaks")) {
     if (endsWith(filePath, ".xls") | endsWith(filePath, ".xlsx")) {
@@ -35,14 +36,15 @@ LoadData <- function(filePath, sheet = 1, naStrings = c("NA", "-99", "0", "000",
                                stringsAsFactors = FALSE)
     }
     raw_datanona <- stats::na.omit(raw_data)
-    temp <- any(raw_datanona == "Unbinned peaks in locus" |
-                raw_datanona == "Too many alleles")
+    temp <- any(raw_datanona == "Unbinned peaks" |
+                raw_datanona == "Too many alleles" |
+                raw_datanona == "Unbinned peaks in locus")
     if (temp) {
-        cat("Check Geneious file there are still 'Unbinned peaks' and/or 'Too
+        cat("Check Geneious file there are still 'Unbinned peaks', 'Unbinned peaks in locus' and/or 'Too
             many alleles' at some markers\n")
         return(NULL)
     } else {
-    cat("Result file succesfully imported\n")    
+    #cat("Result file succesfully imported\n")    
     return(data.frame(raw_data))
     }
 }
@@ -61,6 +63,19 @@ ExtractNames <- function(nameVector) {
            no = substring(nameVector, 1, 7))
 }
 
+#' Function that extract individual names from index (SEP) or M numbers
+#'
+#' @return a vector of names
+#' @param nameVector a vector containing entries with names that have
+#' replicate name and SSR mix attached, but separated by a character. Only
+#' the string corresponding to the first part of the entry will be
+#' retained eg. samplename_mix1_rep1 will return samplename.
+#' 
+ExtractNames2 <- function(namesVector, sep = "_") {
+    sname <- sapply(strsplit(x = namesVector, split = sep, fixed = TRUE), "[[", 1)
+    sname
+}
+
 #' Check if allele sizes from replicate runs are the same. Returns 'OK'
 #' if all looks identical and returns 'Check' if replicates are
 #' inconsistent. Returns "No data" if there is no data available.
@@ -73,7 +88,6 @@ QCRep <- function(data = data, locus = "") {
   QC[is.na(QC)] <- "No Data"
   QC
 }
-
 
 #' Add genotype results from SSR markers that are analysed on
 #' different PCR mixes to a single dataframe
@@ -91,8 +105,8 @@ MergePlate <- function(data1, data2) {
 
 #' Add genotype results different marker types to 
 #' a single dataframe
-#' @param data1 First dataframe with results
-#' @param data2 Second dataframe with results
+#' @param data1 Dataframe 1 with results
+#' @param data2 Dataframe 2 with results
 #' @export
 MergePlateSum <- function(data1, data2) {
   if (!identical(row.names(data1), row.names(data2))) {
@@ -100,6 +114,23 @@ MergePlateSum <- function(data1, data2) {
   } else {
     cat("Data merged\n")
     return(cbind(data1, data2))
+  }
+}
+
+#' Add genotype results stored in different dataframes into a single
+#' dataframe. Note that the row names of the genotypes need to match.
+#' @param ... dataframes to be merged.
+#' @return data frame with all genotypes results
+#' @export
+MergePlateS <- function(...) {
+    args <- list(...)
+    mergeData <- lapply(args, row.names)                  
+    mergeData <- Reduce(intersect,mergeData)
+    if (length(args[[1]][,1]) != length(mergeData)) {
+        cat("Can not merge object with different names\n")
+    } else {
+        cat("Data merged\n")
+        return(cbind(...))
   }
 }
 
@@ -115,7 +146,7 @@ MaxMod <- function(x) {
 #' Extract the min value from a range of values. Returns NA without a
 #' warning if all data is NA.
 #' @param x vector with values
-#' @return the minimum value of a vector or NA if only missing data
+#' @return the minimum value of a vector or NA if only missing dataq
 MinMod <- function(x) {
     ifelse(!all(is.na(x)),
            min(x, na.rm = T), NA)
@@ -133,8 +164,10 @@ CreateMatchInput <- function(GenotypeResults, filt = "No") {
               "MU23_2", "MU50_1", "MU50_2", "MU51_1",
               "MU51_2", "MU59_1", "MU59_2", "Sex_1", "Sex_2")
   # metadata <- read_excel("~/ownCloud/Spillning2020/QCResults/rovbasedata.xlsx")
-  metadata <- read_excel("~/ownCloud/Spillning2021/rovbasemeta.xlsx")
-  metadata <- metadata[,c(1,4:6)]
+  #metadata <- read_excel("~/ownCloud/Spillning2021/rovbasemeta.xlsx")
+  #metadata <- metadata[,c(1,4:6)]
+  metadata <- read_excel("~/Bearhair/metadata.xlsx")
+  metadata <- metadata[,c(1,4,5,3)]
   names(metadata) <- c("index", "north", "east", "date")
   tt <- merge(GenotypeResults[,c("G10L.1min", "G10L.2max",
                                  "MU05.1min", "MU05.2max",

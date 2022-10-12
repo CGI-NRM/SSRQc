@@ -8,9 +8,9 @@ a single dataframe}
 MergePlateSum(data1, data2)
 }
 \arguments{
-\item{data1}{First dataframe with results}
+\item{data1}{Dataframe 1 with results}
 
-\item{data2}{Second dataframe with results}
+\item{data2}{Dataframe 2 with results}
 }
 \description{
 Add genotype results different marker types to
