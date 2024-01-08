@@ -2,19 +2,23 @@
 % Please edit documentation in R/utils.R
 \name{ExtractNames}
 \alias{ExtractNames}
-\title{Function that extract individual names from index (SEP) or M numbers}
+\title{Extract basename of string}
 \usage{
-ExtractNames(nameVector)
+ExtractNames(x, sep = "_")
 }
 \arguments{
-\item{nameVector}{a vector containing entries with names that have
-replicate name and SSR mix attached. The latter will be stripped in
-and only the \emph{actual} names of samples will be retained.}
+\item{x}{a vector containing entries with names that where
+the names contain the character @param sep that will be used to
+split the names. Only characters or number prior to the first
+instance of @param sep will be retained.}
+
+\item{sep}{character to split input name on.}
 }
 \value{
-a vector of names that 10 long if SEP or 7 long in all
-other cases
+a vector of names that correspond to leading part of names.
 }
 \description{
-Function that extract individual names from index (SEP) or M numbers
+Seperates vector of character strings on @param sep
+and returns a vector where every entry contains all characters
+occuring prior to @sep in the input vector.
 }

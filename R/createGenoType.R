@@ -14,55 +14,61 @@
 #' there are spaces in the names. Hence the need to modify the names
 #' with the replacement of "..." with ".".
 #'
-#' 
 #' @return a list of three dataframes: Genotypes, QC and number of
 #' missing data points
 #' @param file name of the file with replicate data
 #' @param locus names of the loci to be analysed
+#' @param naStrings string treated as NA in import
+#' @param notAllowed strings that will stop import
 #' @export
 
-createGT <- function(file = file, locus = c("Locus1", "Locus2")) {
-    platta <- LoadData(file)
-    if(!is.null(platta) {
-        platta$names <- ExtractNames(platta[,1])
+CreateGenotype <- function(file = file,
+                           locus = c("Locus1", "Locus2"),
+                           naStrings = c("NA", "-99", "0", "000",
+                           "No peaks in locus", "No peaks"),
+                           notAllowed = c("Unbinned peaks",
+                                          "Too many alleles",
+                                          "Unbinned peaks in locus",
+                                          "Peaks outside loci")) {
+    dataPlate <- LoadData(file, naStrings = naStrings, notAllowed = notAllowed)
+    if(!is.null(dataPlate)) {
+        dataPlate$names <- ExtractNames(dataPlate[,1])
         togrep <- paste(locus, collapse="|")
-        platta1 <- platta[,grepl(togrep, names(platta))]
-        
-        indDataMax <- stats::aggregate(platta1, by = list(platta$names),
+        dataPlate1 <- dataPlate[,grepl(togrep, names(dataPlate))]
+        sampleDataMax <- stats::aggregate(dataPlate1, by = list(dataPlate$names),
                                 MaxMod)
-        row.names(indDataMax) <- indDataMax$Group.1
-        indDataMax <- indDataMax[, - which(names(indDataMax) == "Group.1")]
-        colnames(indDataMax) <- paste0(gsub(pattern = "...",
-                                            x = colnames(indDataMax),
+        row.names(sampleDataMax) <- sampleDataMax$Group.1
+        sampleDataMax <- sampleDataMax[, - which(names(sampleDataMax) == "Group.1")]
+        colnames(sampleDataMax) <- paste0(gsub(pattern = "...",
+                                            x = colnames(sampleDataMax),
                                             replacement = ".",
                                             fixed = TRUE),
                                        "max")
-        indDataMin <- stats::aggregate(platta1, by = list(platta$names),
+        sampleDataMin <- stats::aggregate(dataPlate1, by = list(dataPlate$names),
                                 MinMod)
-        row.names(indDataMin) <- indDataMin$Group.1
-        indDataMin <- indDataMin[, - which(names(indDataMin) == "Group.1")]
-        colnames(indDataMin) <- paste0(gsub(pattern = "...",
-                                            x = colnames(indDataMin),
+        row.names(sampleDataMin) <- sampleDataMin$Group.1
+        sampleDataMin <- sampleDataMin[, - which(names(sampleDataMin) == "Group.1")]
+        colnames(sampleDataMin) <- paste0(gsub(pattern = "...",
+                                            x = colnames(sampleDataMin),
                                             replacement = ".",
                                             fixed = TRUE),
                                        "min")
-        indData <- cbind(indDataMin, indDataMax)
-        QC <- lapply(locus, QCRep, data = indData)
+        sampleData <- cbind(sampleDataMin, sampleDataMax)
+        QC <- lapply(locus, QCRep, data = sampleData)
         QC <- as.data.frame(do.call(cbind, QC))
         colnames(QC) <- paste(locus, ".QC", sep = "")
-        indData <- indData[,grepl(".1min|.2max", names(indData))]
-        QC_Gt <- cbind(indData, QC)
-        QC_Gt <- QC_Gt[,order(names(QC_Gt))]
-        gt <- QC_Gt[,!grepl("QC", names(QC_Gt))]
-        res <- list(QC = QC_Gt,
-                    Genotypes = gt,
-                    gt.missing = rowSums(is.na(gt)))
-        return(res)
+        sampleData <- sampleData[,grepl(".1min|.2max", names(sampleData))]
+        QCGenotypes <- cbind(sampleData, QC)
+        QCGenotypes <- QCGenotypes[,order(names(QCGenotypes))]
+        genotypes <- QCGenotypes[,!grepl("QC", names(QCGenotypes))]
+        result <- list(QC = QCGenotypes,
+                    Genotypes = genotypes,
+                    genotype_missing = rowSums(is.na(genotypes)))
+        return(result)
     } else {
         cat("There is no data from specified loci in the given file\n")
         return(NULL)
     }
-    
 }
 
 
@@ -88,85 +94,119 @@ createGT <- function(file = file, locus = c("Locus1", "Locus2")) {
 #' 2. All markers have NA, the sex is not determined NA is reported
 #' 3. In case of mismatch the most common sex i extracted.
 #' 4. The Male marker is better as the y-chromosome markers can not separate failed from female.
+#' @export
 #' @param data a dataframe with genotype results
 #' @return list with input data plus QC score and a vector with most likely sex
+ 
 sexdetermination <- function(data = data, locus = c("Male",
                                                     "UaY15020",
                                                     "UarY369.4",
                                                     "Y318.2",
-                                                    "SMCY")) {
-    genSexOrg  <- rep(NA, nrow(data))
-    genSexUay  <- rep(NA, nrow(data))
-    genSexUar  <- rep(NA, nrow(data))
-    genSexY    <- rep(NA, nrow(data))
-    genSexSMCY <- rep(NA, nrow(data))
-
+                                                    "SMCY",
+                                                    "ZFX")) {
+    sexMarkerMale  <- rep(NA, nrow(data))
+    sexMarkerUaY15020  <- rep(NA, nrow(data))
+    sexMarkerUarY369.4  <- rep(NA, nrow(data))
+    sexMarkerY318.2    <- rep(NA, nrow(data))
+    sexMarkerSMCY <- rep(NA, nrow(data))
+    sexMarkerZFX <- rep(NA, nrow(data))
+ 
     if(any(grepl("Male", colnames(data)))) {
-        ResOrg <- data[,grepl("Male", names(data))]
-        ResOrg$merge <- paste(ResOrg[,1], ResOrg[,2])
-        genSexOrg <- ifelse(ResOrg$merge == "NA 152"  |
-                                ResOrg$merge == "152 152" |
-                                ResOrg$merge == "152 NA",
+        resSexMarkerMale <- data[,grepl("Male", names(data))]
+        resSexMarkerMale$merge <- paste(resSexMarkerMale[,1], resSexMarkerMale[,2])
+        sexMarkerMale <- ifelse(resSexMarkerMale$merge == "NA 152"  |
+                                resSexMarkerMale$merge == "152 152" |
+                                resSexMarkerMale$merge == "152 NA",
                             yes = "Hona",
-                            no = ifelse(ResOrg$merge == "98 152" |
-                                            ResOrg$merge == "98 NA"  |
-                                            ResOrg$merge == "NA 98"  |
-                                            ResOrg$merge == "152 98",
+                            no = ifelse(resSexMarkerMale$merge == "98 152" |
+                                            resSexMarkerMale$merge == "98 NA"  |
+                                            resSexMarkerMale$merge == "NA 98"  |
+                                            resSexMarkerMale$merge == "152 98",
                                         yes = "Hane",
                                         no = NA))
         
     }
     if(any(grepl("UaY15020", colnames(data)))) {
-        ResUay    <- data[,grepl("UaY", names(data))]
-        genSexUay <- ifelse(is.na(ResUay[,1]),
-                            yes = NA,
+        resSexMarkerUaY15020    <- data[,grepl("UaY", names(data))]
+        sexMarkerUaY15020 <- ifelse(is.na(resSexMarkerUaY15020[,1]),
+                            yes = "Hona",
                             no  = "Hane")
     }
     
     if(any(grepl("UarY369.4", colnames(data)))) {
-        ResUar    <- data[,grepl("Uar", names(data))]
-        genSexUar <- ifelse(is.na(ResUar[,1]),
-                            yes = NA,
+        resSexMarkerUarY369.4 <- data[,grepl("UarY369", names(data))]
+        sexMarkerUarY369.4 <- ifelse(is.na(resSexMarkerUarY369.4[,1]),
+                            yes = "Hona",
                             no  = "Hane")
+    }
+    if(any(grepl("ZFX", colnames(data)))) {
+        resSexMarkerX <- data[,grepl("ZFX", names(data))]
+        sexMarkerX <- ifelse(is.na(resSexMarkerX[,1]),
+                            yes = NA,
+                            no  = "Hona/Hane")
     }
     if(any(grepl("Y318.2", colnames(data)))) {
-        ResY <- data[, grepl("ZFX", names(data))]
-        ResY <- cbind(ResY, data[, grepl("318.2", names(data))])  
-        ResY$merge <- paste(ResY[,1], ResY[,3])
-        genSexY <- ifelse(ResY$merge == "NA 160"  |
-                          ResY$merge == "160 NA",
-                          yes = "Hona",
-                          no  = ifelse(ResY$merge == "NA NA",
-                                       yes = NA,
-                                       no  = "Hane"))
+        resSexMarkerY318.2 <- data[, grepl("Y318", names(data))]
+        sexMarkerY318.2 <- ifelse(is.na(resSexMarkerY318.2[,1]),
+                                yes = "Hona",
+                                no  = "Hane")
     }
     if(any(grepl("SMCY", colnames(data)))) {
-        ResSMCY    <- data[,grepl("SMCY", names(data))]
-        genSexSMCY <- ifelse(is.na(ResSMCY[,1]),
-                            yes = NA,
+        resSexMarkerSMCY    <- data[,grepl("SMCY", names(data))]
+        sexMarkerSMCY <- ifelse(is.na(resSexMarkerSMCY[,1]),
+                            yes = "Hona",
                             no  = "Hane")
     }
-    genSex <- data.frame(genSexOrg, genSexUar, genSexUay, genSexY, genSexSMCY)
-    sexQC <- function(vec) {
-        if(all(is.na(vec))) {
+    geneticSex <- data.frame(sexMarkerX, sexMarkerMale,
+        sexMarkerUarY369.4, sexMarkerUaY15020, sexMarkerY318.2,
+        sexMarkerSMCY)
+    SexCon <- function(sexVector) {
+        sexVno2  <- factor(sexVector[-1])
+        if(is.na(sexVector[1])) {
             NA
-        } else {        
-        vec2 <- na.omit(vec)
-        tt <- all(vec2 == vec2[1], na.rm = TRUE)
-        ifelse(tt, yes = "OK", no = "Check!")
+        } else if (names(sort(table(sexVno2),
+                              decreasing = TRUE)[1]) == "Hane") {
+            "Hane"
+        } else {
+            "Hona"
         }
-        }
-    QC <- unlist(apply(genSex, MARGIN = 1, sexQC))
-    consensusExtract <- function(vec) {
-        names(sort(table(factor(vec)), decreasing = TRUE))[1]
     }
-    consensus <- unlist(apply(genSex, MARGIN = 1, consensusExtract))
+
+    SexQC  <- function(sexVector) {
+        sexV2  <- sexVector[-1]
+        ifelse(length(unique(na.omit(sexV2))) == 1,
+               yes = "OK",
+               no  = "Check!")
+    }
     
-    genSex <- cbind(genSex, QC, consensus)
-    colnames(genSex) <- c(names(genSex[-ncol(genSex)]), "Sex")
-    rownames(genSex) <- rownames(data)
-    consensus <- as.data.frame(consensus)
-    rownames(consensus) <- rownames(data)
-    return(list(QC = genSex,
-                Genotypes = consensus))
+    ## SexQC <- function(sexVector) {
+    ##     sexVector[1] <- ifelse(sexVector[1] == "Hona/Hane" & 
+    ##                                all(is.na(sexVector[2:length(sexVector)])),
+    ##                            yes = "Hona",
+    ##                            no  = "Hane")
+    ##     if(all(is.na(sexVector))) {
+    ##         NA
+    ##     } else {
+    ##         sexVector <- na.omit(sexVector)
+    ##         sameSex <- all(sexVector == sexVector[1])
+    ##         ifelse(sameSex, yes = "OK", no = "Check!")
+    ##     }
+    ## }
+    QC <- unlist(apply(geneticSex, MARGIN = 1, SexQC))
+    ## ConsensusSexExtract <- function(sexVector) {
+    ##     if(all(is.na(sexVector))) {
+    ##         NA
+    ##     } else {
+    ##         names(sort(table(factor(sexVector)), decreasing = TRUE))[1]
+    ##     }
+    ##}
+    consensusSex <- unlist(apply(geneticSex, MARGIN = 1, SexCon))
+    geneticSex <- cbind(geneticSex, QC, consensusSex)
+    colnames(geneticSex) <- c(names(geneticSex[-ncol(geneticSex)]), "Sex")
+    rownames(geneticSex) <- rownames(data)
+    consensusSex <- as.data.frame(consensusSex)
+    rownames(consensusSex) <- rownames(data)
+    return(list(QC = geneticSex,
+                Genotypes = consensusSex)) 
 } 
+ 

@@ -2,8 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{MaxMod}
 \alias{MaxMod}
-\title{Extract the max value from a range of values. Returns NA without a
-warning if all data is NA.}
+\title{Extract the max value from a range of values.}
 \usage{
 MaxMod(x)
 }
@@ -14,6 +13,6 @@ MaxMod(x)
 the maximum value from a vector or NA if only missing data
 }
 \description{
-Extract the max value from a range of values. Returns NA without a
-warning if all data is NA.
+Returns maximum value from a a vector of values and
+returns NA if all data is NA.
 }

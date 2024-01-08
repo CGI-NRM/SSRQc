@@ -1,6 +1,7 @@
-load_data <- function(file_path, sheet = 1, na_strings = c("NA", "-99", "0", "000", "No peaks in locus
-", "No peaks"
-)) {
+loadData <- function(file_path, 
+                     sheet = 1, 
+                     naStrings = c("NA", "-99", "0", "000", "No peaks in locus", "No peaks"),
+                     notAllowed = c("Unbinned peaks","Too many alleles", "Unbinned peaks in locus", "Peaks outside loci")) {
   # Helper function read facilitate data import of different file formats
   # Returns a dataframe of the imported data
   #
@@ -13,25 +14,25 @@ load_data <- function(file_path, sheet = 1, na_strings = c("NA", "-99", "0", "00
     if (endsWith(file_path, ".xls") | endsWith(file_path, ".xlsx")) {
         raw_data <- readxl::read_excel(path = file_path,
                                        col_names = TRUE,
-                                       na = na_strings,
+                                       na = naStrings,
                                        sheet = sheet)
     } else if (endsWith(file_path, ".ods")) {
         raw_data <- readODS::read_ods(path = file_path,
                                       col_names = TRUE,
-                                      na = na_strings,
+                                      na = naStrings,
                                       sheet = sheet)
     } else if (endsWith(file_path, ".tsv") |
                endsWith(file_path, ".tdf") |
                endsWith(file_path, ".txt")) {
         raw_data <- read.table(file = file_path,
                                header = TRUE,
-                               na.strings = na_strings,
+                               na.strings = naStrings,
                                sep = "\t",
                                stringsAsFactors = FALSE)
     } else {
         raw_data <- read.table(file = file_path,
                                header = TRUE,
-                               na.strings = na_strings,
+                               na.strings = naStrings,
                                sep = ",",
                                stringsAsFactors = FALSE)
     }

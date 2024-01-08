@@ -11,7 +11,7 @@ MinMod(x)
 \item{x}{vector with values}
 }
 \value{
-the minimum value of a vector or NA if only missing dataq
+the minimum value of a vector or NA if only missing data
 }
 \description{
 Extract the min value from a range of values. Returns NA without a

@@ -2,19 +2,19 @@
 % Please edit documentation in R/utils.R
 \name{QCRep}
 \alias{QCRep}
-\title{Check if allele sizes from replicate runs are the same. Returns 'OK'
-if all looks identical and returns 'Check' if replicates are
-inconsistent. Returns "No data" if there is no data available.}
+\title{Quality control of  allele sizes from replicate runs.}
 \usage{
 QCRep(data = data, locus = "")
 }
 \arguments{
 \item{data}{with genotyping results}
 
-\item{locus}{of the marker to analysed}
+\item{locus}{of the marker to be analysed}
 }
 \description{
-Check if allele sizes from replicate runs are the same. Returns 'OK'
-if all looks identical and returns 'Check' if replicates are
-inconsistent. Returns "No data" if there is no data available.
+Quality controls will compare all replicate run of
+sample and return 'OK' if all values are identical excluding
+missing data.  If values are inconsistent it will return
+'Check'. If there is only missing data on a given sample it
+will return 'No data'
 }

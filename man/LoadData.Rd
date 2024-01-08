@@ -2,28 +2,32 @@
 % Please edit documentation in R/utils.R
 \name{LoadData}
 \alias{LoadData}
-\title{Helper function read facilitate data import of different file
-formats}
+\title{Automate tabular data import from different file formats}
 \usage{
-LoadData(
-  filePath,
-  sheet = 1,
-  naStrings = c("NA", "-99", "0", "000", "No peaks in locus", "No peaks")
-)
+LoadData(filePath, sheet = 1, naStrings, notAllowed)
 }
 \arguments{
-\item{sheet}{which sheet to read data from in excel and ods file formats}
+\item{filePath}{name of file to import data from (with path)}
 
-\item{naStrings}{entries should be converted to NA values on import
-\strong{NB! The function uses file endings to guess file formats. Will not work if file ending}
-\strong{is not consistent with actual file type}}
+\item{sheet}{which sheet to read data from in excel and ods file
+formats}
 
-\item{file_path}{name of file to import data from (with path)}
+\item{naStrings}{entries should be converted to NA values on import}
+
+\item{notAllowed}{entries that is not valid input and if found will
+inhibit import \strong{NB! The function uses file endings to guess
+file formats. Will not work if file ending} \strong{is not
+consistent with actual file type}}
 }
 \value{
 a dataframe of the imported data
 }
 \description{
-Helper function read facilitate data import of different file
-formats
+Import of tabular data from different file formats
+requires use of different packages and syntax. Here we use file
+endings to quess the file format and select the most suitable
+import tool to generate a dataframe with column
+headers. Currently supports excel files (.xlsx, .xls), tab
+delimeted files (.tsv, .tdf, .txt), open document format (.ods)
+and comma separated files (.csv)
 }

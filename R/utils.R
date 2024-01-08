@@ -1,16 +1,26 @@
-#' Helper function read facilitate data import of different file
-#' formats
+#' @title Automate tabular data import from different file formats
 #'
-#' @return a dataframe of the imported data
-#' @param file_path name of file to import data from (with path)
-#' @param sheet which sheet to read data from in excel and ods file formats
+#' @description Import of tabular data from different file formats
+#'     requires use of different packages and syntax. Here we use file
+#'     endings to quess the file format and select the most suitable
+#'     import tool to generate a dataframe with column
+#'     headers. Currently supports excel files (.xlsx, .xls), tab
+#'     delimeted files (.tsv, .tdf, .txt), open document format (.ods)
+#'     and comma separated files (.csv)
+#' @param filePath name of file to import data from (with path)
+#' @param sheet which sheet to read data from in excel and ods file
+#'     formats
 #' @param naStrings entries should be converted to NA values on import
-#' __NB! The function uses file endings to guess file formats. Will not work if file ending__
-#' __is not consistent with actual file type__
-#' @import readxl
+#' @param notAllowed entries that is not valid input and if found will
+#'     inhibit import __NB! The function uses file endings to guess
+#'     file formats. Will not work if file ending__ __is not
+#'     consistent with actual file type__
+#' @return a dataframe of the imported data
 #' @export
-LoadData <- function(filePath, sheet = 1, naStrings = c("NA", "-99", "0", "000", "No peaks in locus", "No peaks")) {
-    if (endsWith(filePath, ".xls") | endsWith(filePath, ".xlsx")) {
+LoadData <- function(filePath, sheet = 1,
+                     naStrings,
+                     notAllowed) {
+    if (endsWith(filePath, ".xls") || endsWith(filePath, ".xlsx")) {
         raw_data <- readxl::read_excel(path = filePath,
                                        col_names = TRUE,
                                        na = naStrings,
@@ -20,8 +30,8 @@ LoadData <- function(filePath, sheet = 1, naStrings = c("NA", "-99", "0", "000",
                                       col_names = TRUE,
                                       na = naStrings,
                                       sheet = sheet)
-    } else if (endsWith(filePath, ".tsv") |
-               endsWith(filePath, ".tdf") |
+    } else if (endsWith(filePath, ".tsv") ||
+               endsWith(filePath, ".tdf") ||
                endsWith(filePath, ".txt")) {
         raw_data <- utils::read.table(file = filePath,
                                header = TRUE,
@@ -35,94 +45,62 @@ LoadData <- function(filePath, sheet = 1, naStrings = c("NA", "-99", "0", "000",
                                sep = ",",
                                stringsAsFactors = FALSE)
     }
-    raw_datanona <- stats::na.omit(raw_data)
-    temp <- any(raw_datanona == "Unbinned peaks" |
-                raw_datanona == "Too many alleles" |
-                raw_datanona == "Unbinned peaks in locus")
-    if (temp) {
-        cat("Check Geneious file there are still 'Unbinned peaks', 'Unbinned peaks in locus' and/or 'Too
-            many alleles' at some markers\n")
-        return(NULL)
+    notA <- notAllowed %in% unlist(raw_data)
+    if (any(notA)) {
+        cat("Check export from Geneious there are still:",
+            notAllowed[notA], "in the export\n")
+        return(data.frame(raw_data))
     } else {
-    #cat("Result file succesfully imported\n")    
+    cat("Result file succesfully imported\n")
     return(data.frame(raw_data))
     }
 }
 
-#' Function that extract individual names from index (SEP) or M numbers
+#' @title Extract basename of string
 #'
-#' @return a vector of names that 10 long if SEP or 7 long in all
-#' other cases
-#' @param nameVector a vector containing entries with names that have
-#' replicate name and SSR mix attached. The latter will be stripped in
-#' and only the _actual_ names of samples will be retained.
-#' 
-ExtractNames <- function(nameVector) {
-    ifelse(startsWith(nameVector, "SEP"),
-           yes = substring(nameVector, 1, 10),
-           no = substring(nameVector, 1, 7))
+#' @description Seperates vector of character strings on @param sep
+#'     and returns a vector where every entry contains all characters
+#'     occuring prior to @sep in the input vector.
+#' @param x a vector containing entries with names that where
+#'     the names contain the character @param sep that will be used to
+#'     split the names. Only characters or number prior to the first
+#'     instance of @param sep will be retained.
+#' @param sep character to split input name on.
+#' @return a vector of names that correspond to leading part of names.
+ExtractNames <- function(x, sep = "_") {
+    unlist(lapply(strsplit(x = x,
+                          split = sep,
+                          fixed = TRUE),
+                  "[[",
+                  1)
+           )
 }
 
-#' Function that extract individual names from index (SEP) or M numbers
+#' @title Quality control of  allele sizes from replicate runs.
 #'
-#' @return a vector of names
-#' @param nameVector a vector containing entries with names that have
-#' replicate name and SSR mix attached, but separated by a character. Only
-#' the string corresponding to the first part of the entry will be
-#' retained eg. samplename_mix1_rep1 will return samplename.
-#' 
-ExtractNames2 <- function(namesVector, sep = "_") {
-    sname <- sapply(strsplit(x = namesVector, split = sep, fixed = TRUE), "[[", 1)
-    sname
-}
-
-#' Check if allele sizes from replicate runs are the same. Returns 'OK'
-#' if all looks identical and returns 'Check' if replicates are
-#' inconsistent. Returns "No data" if there is no data available.
+#' @description Quality controls will compare all replicate run of
+#'     sample and return 'OK' if all values are identical excluding
+#'     missing data.  If values are inconsistent it will return
+#'     'Check'. If there is only missing data on a given sample it
+#'     will return 'No data'
 #' @param data with genotyping results
-#' @param locus of the marker to analysed
+#' @param locus of the marker to be analysed
 QCRep <- function(data = data, locus = "") {
   data <- data[,grepl(locus, names(data))]
   QC <- data[,1] == data[,3] & data[,2] == data[,4]
   QC <- ifelse(QC, yes = "OK", no = "Check")
   QC[is.na(QC)] <- "No Data"
-  QC
+  return(QC)
 }
 
-#' Add genotype results from SSR markers that are analysed on
-#' different PCR mixes to a single dataframe
-#' @param data1 First dataframe with results
-#' @param data2 Second dataframe with results
+#' @title Merges data from multiple dataframes to dataframe
+#'
+#' @description accepts any number of dataframes as arguments and if
+#'     row names are the same they will be merged a single dataframe.
+#' @param ... list of data ot merged
+#' @return datafram with merged data
 #' @export
-MergePlate <- function(data1, data2) {
-    if (!identical(row.names(data1$Genotypes), row.names(data2$Genotypes))) {
-        cat("Can not merge objects with different names\n")
-    } else {
-        cat("Data merged\n")
-        return(cbind(data1, data2))
-    }
-}
-
-#' Add genotype results different marker types to 
-#' a single dataframe
-#' @param data1 Dataframe 1 with results
-#' @param data2 Dataframe 2 with results
-#' @export
-MergePlateSum <- function(data1, data2) {
-  if (!identical(row.names(data1), row.names(data2))) {
-    cat("Can not merge objects with different names\n")
-  } else {
-    cat("Data merged\n")
-    return(cbind(data1, data2))
-  }
-}
-
-#' Add genotype results stored in different dataframes into a single
-#' dataframe. Note that the row names of the genotypes need to match.
-#' @param ... dataframes to be merged.
-#' @return data frame with all genotypes results
-#' @export
-MergePlateS <- function(...) {
+MergePlateS  <- function(...) {
     args <- list(...)
     mergeData <- lapply(args, row.names)                  
     mergeData <- Reduce(intersect,mergeData)
@@ -134,8 +112,10 @@ MergePlateS <- function(...) {
   }
 }
 
-#' Extract the max value from a range of values. Returns NA without a
-#' warning if all data is NA.
+#' @title Extract the max value from a range of values.
+#'
+#' @description Returns maximum value from a a vector of values and
+#'     returns NA if all data is NA.
 #' @param x vector with values
 #' @return the maximum value from a vector or NA if only missing data
 MaxMod <- function(x) {
@@ -146,82 +126,199 @@ MaxMod <- function(x) {
 #' Extract the min value from a range of values. Returns NA without a
 #' warning if all data is NA.
 #' @param x vector with values
-#' @return the minimum value of a vector or NA if only missing dataq
+#' @return the minimum value of a vector or NA if only missing data
 MinMod <- function(x) {
     ifelse(!all(is.na(x)),
            min(x, na.rm = T), NA)
 }
 
-#' Merge genotype data with metadata
+#' @title Merge genotype data with metadata
 #'
-#' 
-
-CreateMatchInput <- function(GenotypeResults, filt = "No") {
-  header <- c("index", "date", "north", "east",
-              "gender", "confirmed_dead", "G10L_1",
-              "G10L_2", "MU05_1", "MU05_2", "MU09_1",
-              "MU09_2", "MU10_1", "MU10_2", "MU23_1",
-              "MU23_2", "MU50_1", "MU50_2", "MU51_1",
-              "MU51_2", "MU59_1", "MU59_2", "Sex_1", "Sex_2")
-  # metadata <- read_excel("~/ownCloud/Spillning2020/QCResults/rovbasedata.xlsx")
-  #metadata <- read_excel("~/ownCloud/Spillning2021/rovbasemeta.xlsx")
-  #metadata <- metadata[,c(1,4:6)]
-  metadata <- read_excel("~/Bearhair/metadata.xlsx")
-  metadata <- metadata[,c(1,4,5,3)]
-  names(metadata) <- c("index", "north", "east", "date")
-  tt <- merge(GenotypeResults[,c("G10L.1min", "G10L.2max",
-                                 "MU05.1min", "MU05.2max",
-                                 "MU09.1min", "MU09.2max",
-                                 "MU10.1min", "MU10.2max",
-                                 "MU23.1min", "MU23.2max",
-                                 "MU50.1min", "MU50.2max",
-                                 "MU51.1min", "MU51.2max",
-                                 "MU59.1min", "MU59.2max")], 
-              metadata, 
-              by.x = "row.names", 
-              by.y = "index")
-  tt$confirmed_dead <- "No"
-  tt <- tt[,c(1,20,18,19,21,2:17)]
-  names(tt) <- header
-  tt$gender[is.na(tt$gender)] <- "Okänt"
-  if(filt == "No") {
-    tt
-  } else {
-    tt[rowSums(is.na(tt[7:22]))<5,]
-  }
+#' @description Merges genotype results with metadata creating a
+#'     dataframe suitable for matching genotype results with available
+#'     genetic database.
+#' @param genotypeResults dataframe with genotype results and unique
+#'     names of each sample
+#' @param filt parameter that turn on and off filtering of data. If
+#'     set to No/NO/no the returned data is not filtered if set to
+#'     Yes/YES/yes samples with more than @param level missing data
+#'     will be omitted
+#' @param metaData path and filename to the file with
+#'     metadata. Assumes that the file is an excel file and that and
+#'     contains sample name, date of sampling and GPS coordinates
+#' @return dataframe with genetic data and metadata merged
+##CreateMatchInput <- function(genotypeResults,
+##                              filt = "No",
+##                              metaData = "rovbasedata.xlsx") {
+##     filt <- toupper(filt)
+##     stopifnot("Filt can only be yes or no", filt == "YES" | filt == "NO")
+##     stopifnot("Can not import the metadatafile. Please give full path to file", file.exists(metaData))
+##     header <- c("index", "date", "north", "east", "gender",
+##                 "confirmed_dead", "G1A_1", "G1A_2","G1D_1", "G1D_2",
+##                 "G10B_1", "G10B_2","G10L_1", "G10L_2", "MU05_1",
+##                 "MU05_2", "MU09_1", "MU09_2", "MU10_1", "MU10_2",
+##                 "MU15_1", "MU15_2", "MU23_1", "MU23_2", "MU50_1",
+##                 "MU50_2", "MU51_1", "MU51_2", "MU59_1", "MU59_2")
+##   metadata <- read_excel("~/ownCloud/Spillning2020/QCResults/rovbasedata.xlsx")
+##   metadata <- read_excel("~/ownCloud/Spillning2021/rovbasemeta.xlsx")
+##   metadata <- metadata[,c(1,4:6)]
+##   names(metadata) <- c("index", "north", "east", "date")
+##   tt <- merge(GenotypeResults[,c("G1A.1min", "G1A.2max",
+##                                  "G1D.1min", "G1D.2max",
+##                                  "G10B.1min", "G10B.2max",
+##                                  "G10L.1min", "G10L.2max",
+##                                  "MU05.1min", "MU05.2max",
+##                                  "MU09.1min", "MU09.2max",
+##                                  "MU10.1min", "MU10.2max",
+##                                  "MU15.1min", "MU15.2max",
+##                                  "MU23.1min", "MU23.2max",
+##                                  "MU50.1min", "MU50.2max",
+##                                  "MU51.1min", "MU51.2max",
+##                                  "MU59.1min", "MU59.2max")], 
+##               metadata, 
+##               by.x = "row.names", 
+##               by.y = "index")
+##   tt$confirmed_dead <- "No"
+##   tt <- tt[,c(1,20,18,19,21,2:17)]
+##   names(tt) <- header
+##   tt$gender[is.na(tt$gender)] <- "Okänt"
+##   if(filt == "No") {
+##     tt
+##   } else {
+##     tt[rowSums(is.na(tt[7:22]))<5,]
+##   }
+## }                            
+ 
+#' @title Merge genotype data with metadata for dead bears
+#'
+#' @description Merges genotype results with metadata creating a
+#'     dataframe suitable for matching genotype results with available
+#'     genetic database.
+#' @param genotypeResults dataframe with genotype results and unique
+#'     names of each sample
+#' @param filt parameter that turn on and off filtering of data. If
+#'     set to No/NO/no the returned data is not filtered if set to
+#'     Yes/YES/yes samples with more than @param level missing data
+#'     will be omitted
+#' @param metaData path and filename to the file with
+#'     metadata. Assumes that the file is an excel file and that and
+#'     contains sample name, date of sampling and GPS coordinates
+#' @param confirmedDead is the sample confirmed dead or not. Allowed values
+#'     Yes/YES/yes or No/NO/no
+#' @return dataframe with genetic and metadata merged
+#' @export
+CreateMatchInput <- function(GenotypeResults, filt = "No",
+                                 metaData = "rovbasemetadata.xlsx",
+                                 confirmedDead = "No") {
+    cDead <- toupper(confirmedDead)
+    stopifnot("confirmedDead can only be yes or no" =
+                  cDead %in% c("YES","NO"))
+    filt <- toupper(filt)
+    stopifnot("filt can only be yes or no"= filt %in% c("YES","NO"))
+    stopifnot("Can not import the metadatafile. Please give full path to file"=
+              file.exists(metaData))
+    metadata <- read_excel(metaData)
+    matchData <- merge(GenotypeResults, metadata, by.x = "row.names", by.y = "SEP")
+    matchData$confirmed_dead  <- confirmedDead
+    matchExport <- data.frame(index =  matchData$Row.names,
+                              DNAid = matchData$DNAid,
+                              Individ = matchData$Individ,
+                              RbSex   = matchData$Sex,
+                              date  = matchData$Datum,
+                              north = matchData$Nord,
+                              east  = matchData$Ost,
+                              gender = matchData$GenSex,
+                              confirmed_dead = matchData$confirmed_dead,
+                              G1A_1  = matchData$G1A.1min,
+                              G2A_2  = matchData$G1A.2max,
+                              G1D_1  = matchData$G1D.1min,
+                              G1D_2  = matchData$G1D.2max,
+                              G10B_1  = matchData$G10B.1min,
+                              G10B_2  = matchData$G10B.2max,
+                              G10L_1  =  matchData$G10L.1min,
+                              G10L_2  = matchData$G10L.2max,
+                              MU05_1  = matchData$MU05.1min,
+                              MU05_2  = matchData$MU05.2max,
+                              MU09_1  = matchData$MU09.1min,
+                              MU09_2  = matchData$MU09.2max,
+                              MU10_1  = matchData$MU10.1min,
+                              MU10_2  = matchData$MU10.2max,
+                              MU15_1  = matchData$MU15.1min,
+                              MU15_2  = matchData$MU15.2max,
+                              MU23_1  = matchData$MU23.1min,
+                              MU23_2  = matchData$MU23.2max,
+                              MU50_1  = matchData$MU50.1min,
+                              MU50_2  = matchData$MU50.2max,
+                              MU51_1  = matchData$MU51.1min,
+                              MU51_2  = matchData$MU51.2max,
+                              MU59_1  = matchData$MU59.1min,
+                              MU59_2  = matchData$MU59.2max)
+    matchExport$gender[is.na(matchExport$gender)] <- "Okänt"
+    if(filt == "NO") {
+        return(matchExport)
+    } else {
+        return(matchExport[rowSums(is.na(matchExport[c(9:ncol(matchExport))]))<10,])
+    }
 }
 
-CreateMatchInputDead <- function(GenotypeResults, filt = "No") {
-  header <- c("index", "date", "north", "east",
-              "gender", "confirmed_dead", "G10L_1",
-              "G10L_2", "MU05_1", "MU05_2", "MU09_1",
-              "MU09_2", "MU10_1", "MU10_2", "MU23_1",
-              "MU23_2", "MU50_1", "MU50_2", "MU51_1",
-              "MU51_2", "MU59_1", "MU59_2")
-  metadata <- read_excel("/home/thomkall/Develop/SSRqc/inst/extdata/DeadbearsRovbase.xlsx")
-  metadata <- metadata[,c(1,3:5)]
-  names(metadata) <- c("index", "north", "east", "date")
-  tt <- merge(GenotypeResults, metadata, by.x = "row.names", by.y = "index")
-  tt$confirmed_dead <- "Yes"
-  tt <- tt[,c("Row.names", "date", "north", "east", "consensus", "confirmed_dead", "G10L.1min",
-        "G10L.2max", "MU05.1min", "MU05.2max", "MU09.1min", "MU09.2max",
-        "MU10.1min", "MU10.2max", "MU23.1min", "MU23.2max", "MU50.1min",
-        "MU50.2max", "MU51.1min", "MU51.2max", "MU59.1min", "MU59.2max")]
-  names(tt) <- header
-  tt$gender[is.na(tt$gender)] <- "Okänt"
-  if(filt == "No") {
-    tt
-  } else {
-    tt[rowSums(is.na(tt[7:22]))<5,]
-  }
+#' Function to from the match database create import file according
+#' the standard given by rovbase
+#'
+#' @return a dataframe with the neccessary content for import to
+#' rovbase.
+#'
+#' @param fromMatchDB Dataframe with target data
+#'
+#'
+#' @param RBData Dataframe with metadata from rovbase for the samples
+#' in fromMatchDB
+
+CreateImport <- function(fromMatchDB, RBData) {
+        miss <- fromMatchDB$index[!fromMatchDB$index %in% RBData$Strekkode]
+        completeFile <- merge(fromMatchDB, RBData,
+                by.x = "index.x", by.y = "Strekkode"
+        )
+        nr <- nrow(completeFile)
+        res <- data.frame(
+                DNAID = completeFile$DNAID,
+                Strekkode = completeFile$index.x,
+                RovbaseID = completeFile$RBID.x,
+                ArtsID = rep(3, nr),
+                Prøvestatus = rep(1, nr),
+                KjønnID = completeFile$gender.x,
+                MetodeID = rep(18, nr),
+                VurderingID = rep(1, nr),
+                Kontrollstatus = rep(6, nr),
+                AnalysertAvID = rep(10, nr),
+                Merknad = rep("", nr),
+                Individ = completeFile$individ,
+                rbIND   = completeFile$Individ.x.x,
+                Lan     = completeFile$Fylke.x.x,
+                TrivialID = completeFile$TrivialID
+        )
+        sum <- list(
+                miss = miss,
+                res = res
+        )
+        return(sum)
 }
 
-# CreateImportData <- function(fromMatchDB, RBData, fileImport, fileInd) {
-#    cols <- c("DNAID","Strekkode","RovbaseID",
-#              "ArtsID", "Provestatus", "KjonnID", "MetodeID",
-#              "VurderingID", "Kontrollstatus", "AnalysertAvID",
-#              "Merknad", "IndividID", "Individnavn", "ReferenseID",
-#              "Referensetekst")
-    
-    
-    
+WriteImportFile <- function(data = results, file = "toimportfinal.xlsx") {
+    openxlsx::write.xlsx(x = data, file = file, overwrite = FALSE)
+    }
+
+
+createIndFile <- function(fromMatchDB) {
+    tempData  <- data.frame(IndividNavn = c(NA, NA, NA,
+                                            "IndividNavn"),
+                            Kjønn = c("1 = Hane",
+                                      "2 = Hona",
+                                      "3 = Okänt",
+                                      "Kjønn"))
+    nyInds <- fromMatchDB[startsWith(fromMatchDB$Individ,"NRM_"),
+                                        c("Individ", "Gender", "SVAID")]
+                    names(nyInds)  <- c("IndividNavn", "Kjønn")
+                    res <- rbind(tempData, nyInds)
+                    return(res)
+}
+

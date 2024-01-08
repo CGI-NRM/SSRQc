@@ -6,7 +6,7 @@
 \usage{
 sexdetermination(
   data = data,
-  locus = c("Male", "UaY15020", "UarY369.4", "Y318.2", "SMCY")
+  locus = c("Male", "UaY15020", "UarY369.4", "Y318.2", "SMCY", "ZFX")
 )
 }
 \arguments{

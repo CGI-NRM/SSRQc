@@ -4,8 +4,40 @@
 \alias{CreateMatchInput}
 \title{Merge genotype data with metadata}
 \usage{
-CreateMatchInput(GenotypeResults, filt = "No")
+CreateMatchInput(
+  GenotypeResults,
+  filt = "No",
+  metaData = "rovbasemetadata.xlsx",
+  confirmedDead = "No"
+)
+}
+\arguments{
+\item{filt}{parameter that turn on and off filtering of data. If
+set to No/NO/no the returned data is not filtered if set to
+Yes/YES/yes samples with more than @param level missing data
+will be omitted}
+
+\item{metaData}{path and filename to the file with
+metadata. Assumes that the file is an excel file and that and
+contains sample name, date of sampling and GPS coordinates}
+
+\item{confirmedDead}{is the sample confirmed dead or not. Allowed values
+Yes/YES/yes or No/NO/no}
+
+\item{genotypeResults}{dataframe with genotype results and unique
+names of each sample}
+}
+\value{
+dataframe with genetic data and metadata merged
+
+dataframe with genetic and metadata merged
 }
 \description{
-Merge genotype data with metadata
+Merges genotype results with metadata creating a
+dataframe suitable for matching genotype results with available
+genetic database.
+
+Merges genotype results with metadata creating a
+dataframe suitable for matching genotype results with available
+genetic database.
 }

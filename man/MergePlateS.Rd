@@ -2,18 +2,17 @@
 % Please edit documentation in R/utils.R
 \name{MergePlateS}
 \alias{MergePlateS}
-\title{Add genotype results stored in different dataframes into a single
-dataframe. Note that the row names of the genotypes need to match.}
+\title{Merges data from multiple dataframes to dataframe}
 \usage{
 MergePlateS(...)
 }
 \arguments{
-\item{...}{dataframes to be merged.}
+\item{...}{list of data ot merged}
 }
 \value{
-data frame with all genotypes results
+datafram with merged data
 }
 \description{
-Add genotype results stored in different dataframes into a single
-dataframe. Note that the row names of the genotypes need to match.
+accepts any number of dataframes as arguments and if
+row names are the same they will be merged a single dataframe.
 }
