@@ -90,7 +90,7 @@ CreateGenotype <- function(file = file,
 #' 2. Any other value == Male
 #' 
 #' Consensus for this is the extracted as follows:
-#' 1. All marker same sex this is the true sex of the sample
+#' 1. All marker the same sex -> this is the true sex of the sample
 #' 2. All markers have NA, the sex is not determined NA is reported
 #' 3. In case of mismatch the most common sex i extracted.
 #' 4. The Male marker is better as the y-chromosome markers can not separate failed from female.
