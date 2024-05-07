@@ -128,11 +128,12 @@ MaxMod <- function(x) {
 #' @param x vector with values
 #' @return the minimum value of a vector or NA if only missing data
 MinMod <- function(x) {
-    ifelse(!all(is.na(x)),
-           min(x, na.rm = T), NA)
+        ifelse(!all(is.na(x)),
+                min(x, na.rm = T), NA
+        )
 }
 
-#' @title Merge genotype data with metadata
+#' @title Merge genotype data with metadata to create match file
 #'
 #' @description Merges genotype results with metadata creating a
 #'     dataframe suitable for matching genotype results with available
@@ -141,75 +142,23 @@ MinMod <- function(x) {
 #'     names of each sample
 #' @param filt parameter that turn on and off filtering of data. If
 #'     set to No/NO/no the returned data is not filtered if set to
-#'     Yes/YES/yes samples with more than @param level missing data
-#'     will be omitted
+#'     Yes/YES/yes samples with more than the missing data option level
+#' @param level the maximum number of markers with missing data
 #' @param metaData path and filename to the file with
-#'     metadata. Assumes that the file is an excel file and that and
-#'     contains sample name, date of sampling and GPS coordinates
-#' @return dataframe with genetic data and metadata merged
-##CreateMatchInput <- function(genotypeResults,
-##                              filt = "No",
-##                              metaData = "rovbasedata.xlsx") {
-##     filt <- toupper(filt)
-##     stopifnot("Filt can only be yes or no", filt == "YES" | filt == "NO")
-##     stopifnot("Can not import the metadatafile. Please give full path to file", file.exists(metaData))
-##     header <- c("index", "date", "north", "east", "gender",
-##                 "confirmed_dead", "G1A_1", "G1A_2","G1D_1", "G1D_2",
-##                 "G10B_1", "G10B_2","G10L_1", "G10L_2", "MU05_1",
-##                 "MU05_2", "MU09_1", "MU09_2", "MU10_1", "MU10_2",
-##                 "MU15_1", "MU15_2", "MU23_1", "MU23_2", "MU50_1",
-##                 "MU50_2", "MU51_1", "MU51_2", "MU59_1", "MU59_2")
-##   metadata <- read_excel("~/ownCloud/Spillning2020/QCResults/rovbasedata.xlsx")
-##   metadata <- read_excel("~/ownCloud/Spillning2021/rovbasemeta.xlsx")
-##   metadata <- metadata[,c(1,4:6)]
-##   names(metadata) <- c("index", "north", "east", "date")
-##   tt <- merge(GenotypeResults[,c("G1A.1min", "G1A.2max",
-##                                  "G1D.1min", "G1D.2max",
-##                                  "G10B.1min", "G10B.2max",
-##                                  "G10L.1min", "G10L.2max",
-##                                  "MU05.1min", "MU05.2max",
-##                                  "MU09.1min", "MU09.2max",
-##                                  "MU10.1min", "MU10.2max",
-##                                  "MU15.1min", "MU15.2max",
-##                                  "MU23.1min", "MU23.2max",
-##                                  "MU50.1min", "MU50.2max",
-##                                  "MU51.1min", "MU51.2max",
-##                                  "MU59.1min", "MU59.2max")], 
-##               metadata, 
-##               by.x = "row.names", 
-##               by.y = "index")
-##   tt$confirmed_dead <- "No"
-##   tt <- tt[,c(1,20,18,19,21,2:17)]
-##   names(tt) <- header
-##   tt$gender[is.na(tt$gender)] <- "Okänt"
-##   if(filt == "No") {
-##     tt
-##   } else {
-##     tt[rowSums(is.na(tt[7:22]))<5,]
-##   }
-## }                            
- 
-#' @title Merge genotype data with metadata for dead bears
-#'
-#' @description Merges genotype results with metadata creating a
-#'     dataframe suitable for matching genotype results with available
-#'     genetic database.
-#' @param genotypeResults dataframe with genotype results and unique
-#'     names of each sample
-#' @param filt parameter that turn on and off filtering of data. If
-#'     set to No/NO/no the returned data is not filtered if set to
-#'     Yes/YES/yes samples with more than @param level missing data
-#'     will be omitted
-#' @param metaData path and filename to the file with
-#'     metadata. Assumes that the file is an excel file and that and
-#'     contains sample name, date of sampling and GPS coordinates
+#'     metadata. Assumes that the file is an excel file and that the file
+#'     contains sample name (Strekkode, SEP), DNAid,  date of sampling
+#'     and GPS coordinates. 
 #' @param confirmedDead is the sample confirmed dead or not. Allowed values
 #'     Yes/YES/yes or No/NO/no
+#' @param colnamesWithSEP name of the column in metaData that contains
+#'     SEP number eg. SEP##### or M####
 #' @return dataframe with genetic and metadata merged
 #' @export
 CreateMatchInput <- function(GenotypeResults, filt = "No",
-                                 metaData = "rovbasemetadata.xlsx",
-                                 confirmedDead = "No") {
+                             level = 4,
+                             metaData = "rovbasemetadata.xlsx",
+                             confirmedDead = "No",
+                             colnamesWithSEP = "Strekkode pröve") {
     cDead <- toupper(confirmedDead)
     stopifnot("confirmedDead can only be yes or no" =
                   cDead %in% c("YES","NO"))
@@ -217,17 +166,17 @@ CreateMatchInput <- function(GenotypeResults, filt = "No",
     stopifnot("filt can only be yes or no"= filt %in% c("YES","NO"))
     stopifnot("Can not import the metadatafile. Please give full path to file"=
               file.exists(metaData))
-    metadata <- read_excel(metaData)
-    matchData <- merge(GenotypeResults, metadata, by.x = "row.names", by.y = "SEP")
+    metadata <- suppressWarnings(read_excel(metaData))
+    matchData <- merge(GenotypeResults, metadata, by.x = "row.names", by.y = colnamesWithSEP)
     matchData$confirmed_dead  <- confirmedDead
     matchExport <- data.frame(index =  matchData$Row.names,
-                              DNAid = matchData$DNAid,
+                              DNAid = matchData$`DNAID (Prøve)`,
                               Individ = matchData$Individ,
-                              RbSex   = matchData$Sex,
-                              date  = matchData$Datum,
-                              north = matchData$Nord,
-                              east  = matchData$Ost,
-                              gender = matchData$ConsensusSex,
+                              RbSex   = matchData$`Kjønn (Analyse)`,
+                              date  = matchData$Funnetdato,
+                              north = matchData$`Nord (UTM33/SWEREF99 TM)`,
+                              east  = matchData$`Øst (UTM33/SWEREF99 TM)`,
+                              gender = matchData$consensusSex,
                               confirmed_dead = matchData$confirmed_dead,
                               G1A_1  = matchData$G1A.1min,
                               G1A_2  = matchData$G1A.2max,
@@ -254,10 +203,37 @@ CreateMatchInput <- function(GenotypeResults, filt = "No",
                               MU59_1  = matchData$MU59.1min,
                               MU59_2  = matchData$MU59.2max)
     matchExport$gender[is.na(matchExport$gender)] <- "Okänt"
+    NumberOfSamplesWithGenotype <- nrow(GenotypeResults)
+    NumberOfSamplesInRovbaseMeta <- nrow(matchExport)
     if(filt == "NO") {
+        cat(NumberOfSamplesInRovbaseMeta, "out of",
+            NumberOfSamplesWithGenotype,
+            "samples have information in rovbase", "\n")
+        cat("Saved:", nrow(matchExport), "sample(s)", "\n")
         return(matchExport)
     } else {
-        return(matchExport[rowSums(is.na(matchExport[c(9:ncol(matchExport))]))<10,])
+        matchExport <- matchExport[rowSums(is.na(matchExport[,c("G10L_1",
+                                                                    "G10L_2",
+                                                                    "MU05_1",
+                                                                    "MU05_2",
+                                                                    "MU09_1",
+                                                                    "MU09_2",
+                                                                    "MU10_1",
+                                                                    "MU10_2",
+                                                                    "MU23_1",
+                                                                    "MU23_2",
+                                                                    "MU50_1",
+                                                                    "MU50_2",
+                                                                    "MU51_1",
+                                                                    "MU51_2",
+                                                                    "MU59_1",
+                                                                    "MU59_2")]
+                                                 ))<5,]
+        cat(NumberOfSamplesInRovbaseMeta, "out of",
+            NumberOfSamplesWithGenotype,
+            "samples have information in rovbase", "\n")
+        cat("Saved:", nrow(matchExport), "sample(s)", "\n")
+        return(matchExport)
     }
 }
 

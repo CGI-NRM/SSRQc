@@ -88,17 +88,24 @@ CreateGenotype <- function(file = file,
 #' The other markers that are y-chromosome markers have the following properties:
 #' 1. NA NA == Female
 #' 2. Any other value == Male
+#'
+#' The third marker is found in both male and females and can not
+#' seperate between sex, but is used as a control that the sample can
+#' be analysed for sex chromosomes.
 #' 
 #' Consensus for this is the extracted as follows:
 #' 1. All marker the same sex -> this is the true sex of the sample
-#' 2. All markers have NA, the sex is not determined NA is reported
-#' 3. In case of mismatch the most common sex i extracted.
+#' 2. All markers have NA -> sex is not determined NA is reported
+#' 3. In case of mismatch ->  most common sex i extracted.
 #' 4. The Male marker is better as the y-chromosome markers can not separate failed from female.
+#'
+#' @param data a dataframe with genotype results including loci that
+#'     are linked to sex chromosomes
+#' @return list with input data plus QC score and a vector with most
+#' likely sex
 #' @export
-#' @param data a dataframe with genotype results
-#' @return list with input data plus QC score and a vector with most likely sex
  
-sexdetermination <- function(data = data, locus = c("Male",
+SexDetermination <- function(data = data, locus = c("Male",
                                                     "UaY15020",
                                                     "UarY369.4",
                                                     "Y318.2",
@@ -140,8 +147,8 @@ sexdetermination <- function(data = data, locus = c("Male",
                             no  = "Hane")
     }
     if(any(grepl("ZFX", colnames(data)))) {
-        resSexMarkerX <- data[,grepl("ZFX", names(data))]
-        sexMarkerX <- ifelse(is.na(resSexMarkerX[,1]),
+        resSexMarkerZFX <- data[,grepl("ZFX", names(data))]
+        sexMarkerZFX <- ifelse(is.na(resSexMarkerZFX[,1]),
                             yes = NA,
                             no  = "Hona/Hane")
     }
@@ -157,7 +164,7 @@ sexdetermination <- function(data = data, locus = c("Male",
                             yes = "Hona",
                             no  = "Hane")
     }
-    geneticSex <- data.frame(sexMarkerX, sexMarkerMale,
+    geneticSex <- data.frame(sexMarkerZFX, sexMarkerMale,
         sexMarkerUarY369.4, sexMarkerUaY15020, sexMarkerY318.2,
         sexMarkerSMCY)
     SexCon <- function(sexVector) {
@@ -171,35 +178,13 @@ sexdetermination <- function(data = data, locus = c("Male",
             "Hona"
         }
     }
-
     SexQC  <- function(sexVector) {
         sexV2  <- sexVector[-1]
         ifelse(length(unique(na.omit(sexV2))) == 1,
                yes = "OK",
                no  = "Check!")
     }
-    
-    ## SexQC <- function(sexVector) {
-    ##     sexVector[1] <- ifelse(sexVector[1] == "Hona/Hane" & 
-    ##                                all(is.na(sexVector[2:length(sexVector)])),
-    ##                            yes = "Hona",
-    ##                            no  = "Hane")
-    ##     if(all(is.na(sexVector))) {
-    ##         NA
-    ##     } else {
-    ##         sexVector <- na.omit(sexVector)
-    ##         sameSex <- all(sexVector == sexVector[1])
-    ##         ifelse(sameSex, yes = "OK", no = "Check!")
-    ##     }
-    ## }
     QC <- unlist(apply(geneticSex, MARGIN = 1, SexQC))
-    ## ConsensusSexExtract <- function(sexVector) {
-    ##     if(all(is.na(sexVector))) {
-    ##         NA
-    ##     } else {
-    ##         names(sort(table(factor(sexVector)), decreasing = TRUE))[1]
-    ##     }
-    ##}
     consensusSex <- unlist(apply(geneticSex, MARGIN = 1, SexCon))
     geneticSex <- cbind(geneticSex, QC, consensusSex)
     colnames(geneticSex) <- c(names(geneticSex[-ncol(geneticSex)]), "Sex")
@@ -209,4 +194,3 @@ sexdetermination <- function(data = data, locus = c("Male",
     return(list(QC = geneticSex,
                 Genotypes = consensusSex)) 
 } 
- 
