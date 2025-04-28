@@ -13,7 +13,16 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-
+Start a a new r-session and load the library the normal way.
 ```{r setup}
 library(SSRqc)
+```
+
+You can then import files with genotype scores. They can be either .csv, .ods or .xlsx files. To import function only works if the name of the loci are as follows:
+"Loci1 - 1" ,"Loci1 - 2" etc. Check the files in the vignette folder of this package to get a better idea of expections. Note that all marker weather they can have 
+two alleles or not have to be represented by two columns. If you only have one column from the scoring, you have to manually duplicate this and make name them with a 
+" - 1" and " - 2". The locus list in the command should only contain the "basename" of the locus and can not contain spaces.
+
+```{r import_data}
+MixUarA <- SSRqc::CreateGenotype("vignettes/Mix_UarA.csv",locus=c("MU59", "G10L","MU05","ZFX","Y318.2")
 ```
