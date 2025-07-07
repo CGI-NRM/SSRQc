@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Brown-bear-example</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Brown-bear-example</h1>
+
+
+
+<p>The SSRqc package have been developed to automate quality control of
+genotype data from the Swedish brown bear monitoring and hence have
+functions that are mostly specific to this project. In short the package
+allows for parsing replicates of genotype data (SSR data originally) and
+extract consensus genotypes score for samples. It also allows for
+extracting the sex of sampled individuals based on sex-specific genotype
+patterns. Furthermore it can take consensus genotypes and create files
+suitable for matching data against databases with known genotypes.
+Lastly it can use genotype data (from the a database) together with
+metadata to generate file formats accepted as import files in
+rovbase.</p>
+<p>To be useful in other projects there is a need to at least modify and
+adapt the following functions:</p>
+<ul>
+<li>SexDetermination</li>
+<li>CreateMatchInput</li>
+<li>CreateSampleImport</li>
+<li>CreateIndividualImport</li>
+</ul>
+<p>as they to some extent use project specific names and file
+formats.</p>
+<p>Loading the package should list any packages that you might have to
+install prior to using the package.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SSRqc)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;lubridate&#39;</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; The following objects are masked from &#39;package:base&#39;:</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt;     date, intersect, setdiff, union</span></span></code></pre></div>
+<div id="import-genotype-results" class="section level2">
+<h2>Import genotype results</h2>
+<p>If you have a file with genotype results (from replicate runs). The
+easiest way to import the file is to use the CreateGenotype function.
+This needs a path to a file and a vector of loci names to be imported.
+import. For the function to work as intended it needs two columns of
+data for every loci, including sex markers, so markers with only one
+value needs to be duplicated before import.</p>
+<p>A file looking like the following can hence be imported with the
+CreateGenotype function.</p>
+<pre><code>#&gt;                 Name MU59 - 1 MU59 - 2 G10L - 1 G10L - 2 MU05 - 1 MU05 - 2
+#&gt; 1         Blank_UarA No peaks No peaks No peaks No peaks No peaks No peaks
+#&gt; 2      Positive_UarA      246      248      178      188      123      123
+#&gt; 3 Sample-1_UarA_rep1      230      240      182      182      127      127
+#&gt; 4 Sample-1_UarA_rep2      230      240      182      182      127      127
+#&gt; 5 Sample-1_UarA_rep3      230      238      182      182      127      127
+#&gt; 6 Sample-2_UarA_rep1      230      240      182      182      127      127
+#&gt;    ZFX - 1  ZFX – 2        Y318_2 - 1        Y318_2 – 2
+#&gt; 1 No peaks No peaks          No peaks          No peaks
+#&gt; 2      160      160               235               235
+#&gt; 3      160      160 No peaks in locus No peaks in locus
+#&gt; 4      160      160 No peaks in locus No peaks in locus
+#&gt; 5      160      160 No peaks in locus No peaks in locus
+#&gt; 6      160      160 No peaks in locus No peaks in locus</code></pre>
+<p>Note that the header column is not composed of valid column names and
+this is correctly handled at import so it is vital that the the name
+structure: LociA - 1, LociA - 2, LociB - 1, LociC - 2… is essential for
+the funcion of the CreateGenotype function.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>locusA <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;MU59&quot;</span>,<span class="st">&quot;G10L&quot;</span>,<span class="st">&quot;MU05&quot;</span>,<span class="st">&quot;ZFX&quot;</span>,<span class="st">&quot;Y318_2&quot;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>MixA <span class="ot">&lt;-</span> <span class="fu">CreateGenotype</span>(<span class="at">file =</span> testfileA, <span class="at">locus =</span> locusA)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Result file succesfully imported</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>locusB <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;MU09&quot;</span>, <span class="st">&quot;MU51&quot;</span>, <span class="st">&quot;MU10&quot;</span>, <span class="st">&quot;SMCY&quot;</span>, <span class="st">&quot;MU23&quot;</span>, <span class="st">&quot;MU50&quot;</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>MixB <span class="ot">&lt;-</span> <span class="fu">CreateGenotype</span>(testfileB, locusB)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; Result file succesfully imported</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>locusC <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;G1A&quot;</span>, <span class="st">&quot;MU15&quot;</span>, <span class="st">&quot;G1D&quot;</span>, <span class="st">&quot;G10B&quot;</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>MixC <span class="ot">&lt;-</span> <span class="fu">CreateGenotype</span>(testfileC, locusC)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; Result file succesfully imported</span></span></code></pre></div>
+<p>The imported data will be a named list of three entries:</p>
+<p>QC - Contains the most likely genotype based on the replicated data
+and column with Ok, Check, or No Data. Ok when all working replicate
+data are consistent. Check for when the genotype is not supported by all
+replicates.</p>
+<p>Genotypes - Contains only the genotype data as in QC, but without QC
+columns.</p>
+<p>genotype_missing - A named vector with how many markers have missing
+data in the different samples.</p>
+<p>If genotype data for one sample is found in multiple files one can
+merge them as follows. The resulting dataframe will contain only the
+consensus genotype for all markers found in the separate files.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>allData <span class="ot">&lt;-</span> <span class="fu">MergePlateS</span>(MixA<span class="sc">$</span>Genotypes, MixB<span class="sc">$</span>Genotypes, MixC<span class="sc">$</span>Genotypes)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; Data merged</span></span></code></pre></div>
+<p>If the data also contains sex markers these can be used to determine
+sex and merge the results to the created dataframe with all data.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>sexDet <span class="ot">&lt;-</span> <span class="fu">SexDetermination</span>(allData)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>allDataWithSex <span class="ot">&lt;-</span> <span class="fu">MergePlateS</span>(allData, sexDet<span class="sc">$</span>Genotypes)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; Data merged</span></span></code></pre></div>
+<p>The final step of the analysis is to generate input files that can be
+used for the shiny application GenotypeCheck. This can be done using the
+CreateMatchInput that combines metadata from rovbase with the genotype
+results. The current implementation assumes that a rovbase metadata file
+is available on your system and have the header as in the export from
+rovbase. It uses the LoadData function to import the metadata and during
+import it renames columns so they only contain valid ASCII characters
+that are valid in R names. This means that there are none of the special
+norwegian/swedish characters are retained in the column names.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>rovbasemetadata <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;rovbasemetadata.xlsx&quot;</span>, <span class="at">package=</span><span class="st">&quot;SSRqc&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>resAll <span class="ot">&lt;-</span> <span class="fu">CreateMatchInput</span>(<span class="at">genotypeResults =</span> allDataWithSex, <span class="at">metaData =</span> rovbasemetadata, <span class="at">colnamesWithSEP =</span> <span class="st">&quot;StrekkodeProve&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; Result file succesfully imported</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 3 out of 9 samples have information in rovbase </span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; Saved: 3 sample(s) in dataframe</span></span></code></pre></div>
+<p>This genotype and metadata in a dataframe can then be saved to file
+for matching to the database.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">write.csv</span>(resAll, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">file =</span> <span class="st">&quot;~/Develop/SSRQc/inst/extdata/res1Vignette.csv&quot;</span>)</span></code></pre></div>
+</div>
+<div id="generate-files-for-rovbase-import" class="section level2">
+<h2>Generate files for rovbase import</h2>
+<p>If one have matched all data to the local database and wants to
+create import files to rovbase there are two functions in this package
+to support this.</p>
+<p>The first file contain sample information and is generated in two
+steps. Step one generates the necessary dataframe in R. There are some
+option that are useful here. The onlyNew set to TRUE will extract the
+new individuals eg. those with NRM ids in the matching database. If set
+to false only the sample matching known ids will be retained (having BI
+in the name). The parameter finalVersion can be set to TRUE to only
+retain the actual information for import in rovbase, but the it is
+recommended to manually check and edit the version created with
+finalVersion set to FALSE as it will make it easy to identify
+discrepancies between our results and data already in rovbase.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>matchDBFile <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;matchDB.csv&quot;</span>, <span class="at">package=</span><span class="st">&quot;SSRqc&quot;</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co"># only new inds and the final version</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>sampleImportResNew <span class="ot">&lt;-</span> <span class="fu">CreateSampleImport</span>(<span class="at">matchDBFile =</span> matchDBFile, <span class="at">metaDataFile =</span> rovbasemetadata, <span class="at">year =</span> <span class="dv">24</span>, <span class="at">onlyNew =</span> <span class="cn">TRUE</span>, <span class="at">methodID =</span> <span class="dv">18</span>, <span class="at">finalVersion =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; Result file succesfully imported</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; Result file succesfully imported</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co"># only known inds and the version suitable for manual curation</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>sampleImportResKnown <span class="ot">&lt;-</span> <span class="fu">CreateSampleImport</span>(<span class="at">matchDBFile =</span> matchDBFile, <span class="at">metaDataFile =</span> rovbasemetadata, <span class="at">year =</span> <span class="dv">24</span>, <span class="at">onlyNew =</span> <span class="cn">FALSE</span>, <span class="at">methodID =</span> <span class="dv">18</span>, <span class="at">finalVersion =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; Result file succesfully imported</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; Result file succesfully imported</span></span></code></pre></div>
+<p>To then actually export these result in correct format try the
+WriteimportFile function.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>headerInfoFile <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;importfileheader.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;SSRqc&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co"># Only new final version</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">WriteImportFile</span>(<span class="at">headerInfoFile =</span> headerInfoFile, <span class="at">data =</span> sampleImportResNew<span class="sc">$</span>res, <span class="at">startRow =</span> <span class="dv">24</span>, <span class="at">sheet =</span> <span class="dv">1</span>, <span class="at">outputFile =</span> <span class="st">&quot;sample_example1.xlsx&quot;</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 25 rows was written to sample_example1.xlsx</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co"># Only known and curation version</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="fu">WriteImportFile</span>(<span class="at">headerInfoFile =</span> headerInfoFile, <span class="at">data =</span> sampleImportResKnown<span class="sc">$</span>res, <span class="at">startRow =</span> <span class="dv">24</span>, <span class="at">sheet =</span> <span class="dv">1</span>, <span class="at">outputFile =</span> <span class="st">&quot;sample_example2.xlsx&quot;</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 26 rows was written to sample_example2.xlsx</span></span></code></pre></div>
+<p>The individual file is only necessary to generate for the new inds
+identified and can be generated from the sample result file with the
+WriteIndFile function.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>headerInfoFileInd <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;importfileIndividheader.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;SSRqc&quot;</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>importSampleFile <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;sample_example1.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;SSRqc&quot;</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">WriteIndFile</span>(<span class="at">headerInfoFile =</span> headerInfoFileInd, <span class="at">importSampleFile =</span> importSampleFile)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; 7 rows was written to toimportIndfinal.xlsx</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
