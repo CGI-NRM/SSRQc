@@ -35,6 +35,8 @@ same name after removing the tail part of the original name. Eg. if
 replicates are named SEP1000001_mix1_rep1, SEP1000001_mix1_rep2 etc
 the sample name will be SEP1000001.
 NB! The naming used for loci in this implementation assumes that
-there are spaces in the names. Hence the need to modify the names
-with the replacement of "..." with ".".
+there are two entries for every locus and the only allowed special
+character is "_". The two alleles should have the same name and be followed
+by a 1 for allele one and a 2 for allele two. See input examples in
+vignette.
 }

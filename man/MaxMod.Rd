@@ -10,9 +10,9 @@ MaxMod(x)
 \item{x}{vector with values}
 }
 \value{
-the maximum value from a vector or NA if only missing data
+the maximum value from a vector or NA if only missing data is found
 }
 \description{
-Returns maximum value from a a vector of values and
+Returns maximum value from a vector of values and
 returns NA if all data is NA.
 }

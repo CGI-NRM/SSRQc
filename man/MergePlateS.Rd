@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{MergePlateS}
 \alias{MergePlateS}
-\title{Merges data from multiple dataframes to dataframe}
+\title{Merges data from multiple dataframes to single dataframe}
 \usage{
 MergePlateS(...)
 }

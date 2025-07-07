@@ -4,7 +4,7 @@
 \alias{LoadData}
 \title{Automate tabular data import from different file formats}
 \usage{
-LoadData(filePath, sheet = 1, naStrings, notAllowed)
+LoadData(filePath, sheet = 1, naStrings = "", notAllowed = "")
 }
 \arguments{
 \item{filePath}{name of file to import data from (with path)}
@@ -15,19 +15,23 @@ formats}
 \item{naStrings}{entries should be converted to NA values on import}
 
 \item{notAllowed}{entries that is not valid input and if found will
-inhibit import \strong{NB! The function uses file endings to guess
-file formats. Will not work if file ending} \strong{is not
-consistent with actual file type}}
+inhibit import
+\strong{NB! The function uses file endings to guess
+file formats. Will not work if file ending}
+\strong{is not consistent with actual file type}}
 }
 \value{
-a dataframe of the imported data
+a dataframe of the imported data with column names that only
+have latin-ascii characters.
 }
 \description{
 Import of tabular data from different file formats
 requires use of different packages and syntax. Here we use file
-endings to quess the file format and select the most suitable
-import tool to generate a dataframe with column
-headers. Currently supports excel files (.xlsx, .xls), tab
-delimeted files (.tsv, .tdf, .txt), open document format (.ods)
-and comma separated files (.csv)
+endings to guess the file format and select the most suitable
+import tool to generate a dataframe with nyntactically valid column
+names. Currently supports excel files (.xlsx, .xls), tab
+delimited files (.tsv, .tdf, .txt), open document format (.ods)
+and comma separated files (.csv). Column names are altered so the
+dataframe will only contain latin-ascii characters even if the read
+file contains special characters
 }

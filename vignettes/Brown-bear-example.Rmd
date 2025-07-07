@@ -13,16 +13,130 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-Start a a new r-session and load the library the normal way.
+
+
+The SSRqc package have been developed to automate quality control of genotype data from the Swedish brown bear monitoring and hence have functions that are mostly specific to this project. In short the package allows for parsing replicates of genotype data (SSR data originally) and extract consensus genotypes score for samples. It also allows for extracting the sex of sampled individuals based on sex-specific genotype patterns. Furthermore it can take consensus genotypes and create files suitable for matching data against databases with known genotypes. Lastly it can use genotype data (from the a database) together with metadata to generate file formats accepted as import files in rovbase.
+
+To be useful in other projects there is a need to at least modify and adapt the following functions:
+
+- SexDetermination
+- CreateMatchInput
+- CreateSampleImport
+- CreateIndividualImport
+
+as they to some extent use project specific names and file formats.
+
+
+Loading the package should list any packages that you might have to install prior to using the package.
+
+
 ```{r setup}
 library(SSRqc)
+library(lubridate)
 ```
 
-You can then import files with genotype scores. They can be either .csv, .ods or .xlsx files. To import function only works if the name of the loci are as follows:
-"Loci1 - 1" ,"Loci1 - 2" etc. Check the files in the vignette folder of this package to get a better idea of expections. Note that all marker weather they can have 
-two alleles or not have to be represented by two columns. If you only have one column from the scoring, you have to manually duplicate this and make name them with a 
-" - 1" and " - 2". The locus list in the command should only contain the "basename" of the locus and can not contain spaces.
+## Import genotype results
+If you have a file with genotype results (from replicate runs). The easiest way to import the file is to use the CreateGenotype function. This needs a path to a file and a vector of loci names to be imported. import. For the function to work as intended it needs two columns of data for every loci, including sex markers, so markers with only one value needs to be duplicated before import.
 
-```{r import_data}
-MixUarA <- SSRqc::CreateGenotype("vignettes/Mix_UarA.csv",locus=c("MU59", "G10L","MU05","ZFX","Y318.2")
+A file looking like the following can hence be imported with the CreateGenotype function.
+
+```{r example,, echo=FALSE}
+testfileA <- system.file("extdata", "Mix_UarA.csv", package="SSRqc")
+testfileB <- system.file("extdata", "Mix_UarB.csv", package="SSRqc")
+testfileC <- system.file("extdata", "Mix_UarC.csv", package="SSRqc")
+
+temp <- read.csv(testfileA, check.names = FALSE)
+head(temp)
+```
+
+Note that the header column is not composed of valid column names and this is correctly handled at import so it is vital that the the name structure: LociA - 1, LociA - 2, LociB - 1, LociC - 2... is essential for the funcion of the CreateGenotype function.
+
+
+```{r import}
+locusA <- c("MU59","G10L","MU05","ZFX","Y318_2")
+MixA <- CreateGenotype(file = testfileA, locus = locusA)
+
+locusB <- c("MU09", "MU51", "MU10", "SMCY", "MU23", "MU50")
+MixB <- CreateGenotype(testfileB, locusB)
+
+locusC <- c("G1A", "MU15", "G1D", "G10B")
+MixC <- CreateGenotype(testfileC, locusC)
+
+
+
+```
+
+The imported data will be a named list of three entries:
+
+QC - Contains the most likely genotype based on the replicated data and column with Ok, Check, or No Data. Ok when all working replicate data are consistent. Check for when the genotype is not supported by all replicates.
+
+Genotypes - Contains only the genotype data as in QC, but without QC columns.
+
+genotype_missing - A named vector with how many markers have missing data in the different samples. 
+
+If genotype data for one sample is found in multiple files one can merge them as follows. The resulting dataframe will contain only the consensus genotype for all markers found in the separate files.
+
+```{r mergeData}
+allData <- MergePlateS(MixA$Genotypes, MixB$Genotypes, MixC$Genotypes)
+```
+
+If the data also contains sex markers these can be used to determine sex and merge the results to the created dataframe with all data.
+
+```{r}
+sexDet <- SexDetermination(allData)
+allDataWithSex <- MergePlateS(allData, sexDet$Genotypes)
+```
+
+
+The final step of the analysis is to generate input files that can be used for the shiny application GenotypeCheck. This can be done using the CreateMatchInput that combines metadata from rovbase with the genotype results. The current implementation assumes that a rovbase metadata file is available on your system and have the header as in the export from rovbase. It uses the LoadData function to import the metadata and during import it renames columns so they only contain valid ASCII characters that are valid in R names. This means that there are none of the special norwegian/swedish characters are retained in the column names.
+
+```{r}
+rovbasemetadata <- system.file("extdata", "rovbasemetadata.xlsx", package="SSRqc")
+resAll <- CreateMatchInput(genotypeResults = allDataWithSex, metaData = rovbasemetadata, colnamesWithSEP = "StrekkodeProve")
+
+```
+
+This genotype and metadata in a dataframe can then be saved to file for matching to the database.
+
+```{r}
+write.csv(resAll, row.names = FALSE, file = "~/Develop/SSRQc/inst/extdata/res1Vignette.csv")
+```
+
+## Generate files for rovbase import
+If one have matched all data to the local database and wants to create import files to rovbase there are two functions in this package to support this. 
+
+The first file contain sample information and is generated in two steps. Step one generates the necessary dataframe in R. There are some option that are useful here. The onlyNew set to TRUE will extract the new individuals eg. those with NRM ids in the matching database. If set to false only the sample matching known ids will be retained (having BI in the name). The parameter finalVersion can be set to TRUE to only retain the actual information for import in rovbase, but the it is recommended to manually check and edit the version created with finalVersion set to FALSE as it will make it easy to identify discrepancies between our results and data already in rovbase.
+
+
+```{r}
+matchDBFile <- system.file("extdata", "matchDB.csv", package="SSRqc")
+
+# only new inds and the final version
+sampleImportResNew <- CreateSampleImport(matchDBFile = matchDBFile, metaDataFile = rovbasemetadata, year = 24, onlyNew = TRUE, methodID = 18, finalVersion = TRUE)
+
+# only known inds and the version suitable for manual curation
+sampleImportResKnown <- CreateSampleImport(matchDBFile = matchDBFile, metaDataFile = rovbasemetadata, year = 24, onlyNew = FALSE, methodID = 18, finalVersion = FALSE)
+
+```
+
+
+To then actually export these result in correct format try the WriteimportFile function.
+
+```{r}
+headerInfoFile <- system.file("extdata", "importfileheader.xlsx", package = "SSRqc")
+
+# Only new final version
+WriteImportFile(headerInfoFile = headerInfoFile, data = sampleImportResNew$res, startRow = 24, sheet = 1, outputFile = "sample_example1.xlsx")
+
+# Only known and curation version
+WriteImportFile(headerInfoFile = headerInfoFile, data = sampleImportResKnown$res, startRow = 24, sheet = 1, outputFile = "sample_example2.xlsx")
+
+```
+
+The individual file is only necessary to generate for the new inds identified and can be generated from the sample result file with the WriteIndFile function.
+
+```{r}
+headerInfoFileInd <- system.file("extdata", "importfileIndividheader.xlsx", package = "SSRqc")
+importSampleFile <- system.file("extdata", "sample_example1.xlsx", package = "SSRqc")
+WriteIndFile(headerInfoFile = headerInfoFileInd, importSampleFile = importSampleFile)
 ```

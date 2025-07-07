@@ -12,8 +12,8 @@ QCRep(data = data, locus = "")
 \item{locus}{of the marker to be analysed}
 }
 \description{
-Quality controls will compare all replicate run of
-sample and return 'OK' if all values are identical excluding
+Quality control that compare replicate results of
+a sample and return 'OK' if all values are identical excluding
 missing data.  If values are inconsistent it will return
 'Check'. If there is only missing data on a given sample it
 will return 'No data'
