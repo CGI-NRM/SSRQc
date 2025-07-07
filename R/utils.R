@@ -2,57 +2,64 @@
 #'
 #' @description Import of tabular data from different file formats
 #'     requires use of different packages and syntax. Here we use file
-#'     endings to quess the file format and select the most suitable
-#'     import tool to generate a dataframe with column
-#'     headers. Currently supports excel files (.xlsx, .xls), tab
-#'     delimeted files (.tsv, .tdf, .txt), open document format (.ods)
-#'     and comma separated files (.csv)
+#'     endings to guess the file format and select the most suitable
+#'     import tool to generate a dataframe with nyntactically valid column
+#'     names. Currently supports excel files (.xlsx, .xls), tab
+#'     delimited files (.tsv, .tdf, .txt), open document format (.ods)
+#'     and comma separated files (.csv). Column names are altered so the
+#'     dataframe will only contain latin-ascii characters even if the read
+#'     file contains special characters
 #' @param filePath name of file to import data from (with path)
 #' @param sheet which sheet to read data from in excel and ods file
 #'     formats
 #' @param naStrings entries should be converted to NA values on import
 #' @param notAllowed entries that is not valid input and if found will
-#'     inhibit import __NB! The function uses file endings to guess
-#'     file formats. Will not work if file ending__ __is not
-#'     consistent with actual file type__
-#' @return a dataframe of the imported data
-#' @export
-LoadData <- function(filePath, sheet = 1,
-                     naStrings,
-                     notAllowed) {
+#'     inhibit import
+#'     __NB! The function uses file endings to guess
+#'     file formats. Will not work if file ending__
+#'     __is not consistent with actual file type__
+#' @return a dataframe of the imported data with column names that only
+#'     have latin-ascii characters.
+#' @importFrom readxl read_excel
+#' @importFrom readODS read_ods
+#' @importFrom utils read.table
+LoadData <- function(filePath, sheet = 1, naStrings = "", notAllowed = "") {
+    stopifnot("Can not import the file. Please give full path to the file you want to import" =
+                  file.exists(filePath))
     if (endsWith(filePath, ".xls") || endsWith(filePath, ".xlsx")) {
-        raw_data <- readxl::read_excel(path = filePath,
+        raw_data <- read_excel(path = filePath,
                                        col_names = TRUE,
                                        na = naStrings,
                                        sheet = sheet)
     } else if (endsWith(filePath, ".ods")) {
-        raw_data <- readODS::read_ods(path = filePath,
+        raw_data <- read_ods(path = filePath,
                                       col_names = TRUE,
                                       na = naStrings,
                                       sheet = sheet)
     } else if (endsWith(filePath, ".tsv") ||
                endsWith(filePath, ".tdf") ||
                endsWith(filePath, ".txt")) {
-        raw_data <- utils::read.table(file = filePath,
+        raw_data <- read.table(file = filePath,
                                header = TRUE,
                                na.strings = naStrings,
                                sep = "\t",
                                stringsAsFactors = FALSE)
     } else {
-        raw_data <- utils::read.table(file = filePath,
+        raw_data <- read.table(file = filePath,
                                header = TRUE,
                                na.strings = naStrings,
                                sep = ",",
                                stringsAsFactors = FALSE)
     }
+    names(raw_data) <- GenerateValidNames(raw_data)
     notA <- notAllowed %in% unlist(raw_data)
     if (any(notA)) {
-        cat("Check export from Geneious there are still:",
-            notAllowed[notA], "in the export\n")
+        warning("Check file there are still:",
+            notAllowed[notA], "in the file\n")
         return(data.frame(raw_data))
     } else {
-    cat("Result file succesfully imported\n")
-    return(data.frame(raw_data))
+        cat("Result file succesfully imported\n")
+        return(data.frame(raw_data))
     }
 }
 
@@ -76,13 +83,30 @@ ExtractNames <- function(x, sep = "_") {
            )
 }
 
+#' @title Generate valid dataframe with "proper" names
+#'
+#' @description Will generate a dataframe where column names have been cleaned up.
+#' It will remove any white spaces and other illegal characters for names.
+#' Will also remove any language specific characters that is not found in the
+#' "latin-ascii" character set.
+#'
+#' @param x a dataframe with names containing the names
+#' @return a vector of names that are valid and contain no strange characters.
+#' @importFrom stringi stri_trans_general
+GenerateValidNames <- function(x) {
+    orgNames <- names(x)
+    validNames <- gsub("\\.", replacement = "", x = make.names(orgNames))
+    validNames <- stri_trans_general(validNames, "latin-ascii")
+    return(validNames)
+}
+
 #' @title Quality control of  allele sizes from replicate runs.
 #'
-#' @description Quality controls will compare all replicate run of
-#'     sample and return 'OK' if all values are identical excluding
-#'     missing data.  If values are inconsistent it will return
-#'     'Check'. If there is only missing data on a given sample it
-#'     will return 'No data'
+#' @description Quality control that compare replicate results of
+#'  a sample and return 'OK' if all values are identical excluding
+#'  missing data.  If values are inconsistent it will return
+#'  'Check'. If there is only missing data on a given sample it
+#'  will return 'No data'
 #' @param data with genotyping results
 #' @param locus of the marker to be analysed
 QCRep <- function(data = data, locus = "") {
@@ -93,7 +117,7 @@ QCRep <- function(data = data, locus = "") {
   return(QC)
 }
 
-#' @title Merges data from multiple dataframes to dataframe
+#' @title Merges data from multiple dataframes to single dataframe
 #'
 #' @description accepts any number of dataframes as arguments and if
 #'     row names are the same they will be merged a single dataframe.
@@ -102,7 +126,7 @@ QCRep <- function(data = data, locus = "") {
 #' @export
 MergePlateS  <- function(...) {
     args <- list(...)
-    mergeData <- lapply(args, row.names)                  
+    mergeData <- lapply(args, row.names)
     mergeData <- Reduce(intersect,mergeData)
     if (length(args[[1]][,1]) != length(mergeData)) {
         cat("Can not merge object with different names\n")
@@ -114,187 +138,105 @@ MergePlateS  <- function(...) {
 
 #' @title Extract the max value from a range of values.
 #'
-#' @description Returns maximum value from a a vector of values and
+#' @description Returns maximum value from a vector of values and
 #'     returns NA if all data is NA.
 #' @param x vector with values
-#' @return the maximum value from a vector or NA if only missing data
+#' @return the maximum value from a vector or NA if only missing data is found
 MaxMod <- function(x) {
     ifelse(!all(is.na(x)),
-           max(x, na.rm=T), NA)
+           max(x, na.rm = TRUE), NA)
 }
 
 #' Extract the min value from a range of values. Returns NA without a
 #' warning if all data is NA.
 #' @param x vector with values
-#' @return the minimum value of a vector or NA if only missing data
+#' @return the minimum value of a vector or NA if only missing data is found
 MinMod <- function(x) {
-        ifelse(!all(is.na(x)),
-                min(x, na.rm = T), NA
-        )
+    ifelse(!all(is.na(x)),
+            min(x, na.rm = TRUE), NA)
 }
 
-#' @title Merge genotype data with metadata to create match file
+#' @title Creates/Writes excel workbook with pre-specified header read from file
+#'  combined with data from selected dataframe.
 #'
-#' @description Merges genotype results with metadata creating a
-#'     dataframe suitable for matching genotype results with available
-#'     genetic database.
-#' @param genotypeResults dataframe with genotype results and unique
-#'     names of each sample
-#' @param filt parameter that turn on and off filtering of data. If
-#'     set to No/NO/no the returned data is not filtered if set to
-#'     Yes/YES/yes samples with more than the missing data option level
-#' @param level the maximum number of markers with missing data
-#' @param metaData path and filename to the file with
-#'     metadata. Assumes that the file is an excel file and that the file
-#'     contains sample name (Strekkode, SEP), DNAid,  date of sampling
-#'     and GPS coordinates. 
-#' @param confirmedDead is the sample confirmed dead or not. Allowed values
-#'     Yes/YES/yes or No/NO/no
-#' @param colnamesWithSEP name of the column in metaData that contains
-#'     SEP number eg. SEP##### or M####
-#' @return dataframe with genetic and metadata merged
+#' @param headerInfoFile excel file with headers to be part of output
+#' @param data dataframe with data to be appended to the headerInfoFile
+#' @param sheet which sheet in the excel file to write to
+#' @param startRow integer corresponding to row in excel that dataframe will be written to
+#' @param outputFile file name to write data to. Should have the file ending .xlsx
+#'
+#' @return Nothing, but will write and overwrite excel file on disk as a side effect.
+#'
+#' @importFrom openxlsx loadWorkbook writeData saveWorkbook
 #' @export
-CreateMatchInput <- function(GenotypeResults, filt = "No",
-                             level = 4,
-                             metaData = "rovbasemetadata.xlsx",
-                             confirmedDead = "No",
-                             colnamesWithSEP = "Strekkode pröve") {
-    cDead <- toupper(confirmedDead)
-    stopifnot("confirmedDead can only be yes or no" =
-                  cDead %in% c("YES","NO"))
-    filt <- toupper(filt)
-    stopifnot("filt can only be yes or no"= filt %in% c("YES","NO"))
-    stopifnot("Can not import the metadatafile. Please give full path to file"=
-              file.exists(metaData))
-    metadata <- suppressWarnings(read_excel(metaData))
-    matchData <- merge(GenotypeResults, metadata, by.x = "row.names", by.y = colnamesWithSEP)
-    matchData$confirmed_dead  <- confirmedDead
-    matchExport <- data.frame(index =  matchData$Row.names,
-                              DNAid = matchData$`DNAID (Prøve)`,
-                              Individ = matchData$Individ,
-                              RbSex   = matchData$`Kjønn (Analyse)`,
-                              date  = matchData$Funnetdato,
-                              north = matchData$`Nord (UTM33/SWEREF99 TM)`,
-                              east  = matchData$`Øst (UTM33/SWEREF99 TM)`,
-                              gender = matchData$consensusSex,
-                              confirmed_dead = matchData$confirmed_dead,
-                              G1A_1  = matchData$G1A.1min,
-                              G1A_2  = matchData$G1A.2max,
-                              G1D_1  = matchData$G1D.1min,
-                              G1D_2  = matchData$G1D.2max,
-                              G10B_1  = matchData$G10B.1min,
-                              G10B_2  = matchData$G10B.2max,
-                              G10L_1  =  matchData$G10L.1min,
-                              G10L_2  = matchData$G10L.2max,
-                              MU05_1  = matchData$MU05.1min,
-                              MU05_2  = matchData$MU05.2max,
-                              MU09_1  = matchData$MU09.1min,
-                              MU09_2  = matchData$MU09.2max,
-                              MU10_1  = matchData$MU10.1min,
-                              MU10_2  = matchData$MU10.2max,
-                              MU15_1  = matchData$MU15.1min,
-                              MU15_2  = matchData$MU15.2max,
-                              MU23_1  = matchData$MU23.1min,
-                              MU23_2  = matchData$MU23.2max,
-                              MU50_1  = matchData$MU50.1min,
-                              MU50_2  = matchData$MU50.2max,
-                              MU51_1  = matchData$MU51.1min,
-                              MU51_2  = matchData$MU51.2max,
-                              MU59_1  = matchData$MU59.1min,
-                              MU59_2  = matchData$MU59.2max)
-    matchExport$gender[is.na(matchExport$gender)] <- "Okänt"
-    NumberOfSamplesWithGenotype <- nrow(GenotypeResults)
-    NumberOfSamplesInRovbaseMeta <- nrow(matchExport)
-    if(filt == "NO") {
-        cat(NumberOfSamplesInRovbaseMeta, "out of",
-            NumberOfSamplesWithGenotype,
-            "samples have information in rovbase", "\n")
-        cat("Saved:", nrow(matchExport), "sample(s)", "\n")
-        return(matchExport)
-    } else {
-        matchExport <- matchExport[rowSums(is.na(matchExport[,c("G10L_1",
-                                                                    "G10L_2",
-                                                                    "MU05_1",
-                                                                    "MU05_2",
-                                                                    "MU09_1",
-                                                                    "MU09_2",
-                                                                    "MU10_1",
-                                                                    "MU10_2",
-                                                                    "MU23_1",
-                                                                    "MU23_2",
-                                                                    "MU50_1",
-                                                                    "MU50_2",
-                                                                    "MU51_1",
-                                                                    "MU51_2",
-                                                                    "MU59_1",
-                                                                    "MU59_2")]
-                                                 ))<5,]
-        cat(NumberOfSamplesInRovbaseMeta, "out of",
-            NumberOfSamplesWithGenotype,
-            "samples have information in rovbase", "\n")
-        cat("Saved:", nrow(matchExport), "sample(s)", "\n")
-        return(matchExport)
+WriteImportFile <- function(headerInfoFile, data, sheet = 1, startRow = 24, outputFile = "toimportfinal.xlsx") {
+    header <- loadWorkbook(file = headerInfoFile)
+    writeData(wb = header, sheet = sheet, x = data, colNames = FALSE, startRow = startRow)
+    saveWorkbook(header, outputFile, overwrite = TRUE)
+    cat(nrow(data) + startRow, "rows was written to", outputFile)
+}
+
+#' @title Creates/Writes excel workbook with pre-specified header read from file
+#'  combined with data from an excel file with sample data in specific format
+#'
+#' @param headerInfoFile excel file with headers to be part of output
+#' @param importSampleFile full path to excel file with sample data that
+#'  will be appended to the headerInfoFile
+#' @param sheet which sheet in the excel file to write to
+#' @param startRow integer corresponding to row in excel that data will be written to
+#' @param outputFile file name to write data to. Should have the file ending .xlsx
+#'
+#' @return Summary of the data written to file and an excel file is
+#'  written to disk as a side effect.
+#'
+#' @importFrom openxlsx loadWorkbook writeData saveWorkbook
+#' @export
+WriteIndFile <- function(headerInfoFile, importSampleFile, sheet = 1, startRow = 6, outputFile = "toimportIndfinal.xlsx") {
+    header <- loadWorkbook(file = headerInfoFile)
+    toind <- read_excel(importSampleFile, skip = 22)
+    toind <- as.data.frame(toind)
+    names(toind) <- GenerateValidNames(toind)
+    toind <- toind[,c("Individnavn", "KjonnID")]
+    toind <- toind[!duplicated(toind$Individnavn),]
+    toind <- toind[order(toind$Individnavn),]
+    writeData(wb = header, sheet = sheet, x = toind, colNames = FALSE, startRow = startRow)
+    saveWorkbook(header, outputFile, overwrite = TRUE)
+    cat(nrow(toind) + startRow, "rows was written to", outputFile)
+}
+
+#' Generate trivial named based on the year that the individual was found and the origin.
+#' NB! Only scat samples should be named with this and dead bears should instead have the SVA-ID
+#' as trivial name.
+#'
+#' @return dataframe with two columns. One with individual name and the second containing the trivialname.
+#'  the trivial names will look like this from a sample from Norrbotten in 2024: BD24-001.
+#'
+#' @param importData dataframe with samples to be imported
+#' @param individualColumn name of the column with individualdata
+#' @param countyColumn name of the column with county data. NB! this should be as the names are given in
+#'  rovbase.
+#' @param year what year are samples from.
+#' @importFrom utils data
+#' @importFrom magrittr %>%
+#' @importFrom dplyr group_by mutate row_number ungroup
+generateTrivialID <- function(importData, individualColumn = "individ", countyColumn = "Fylke", year) {
+    # Load the dataset with county shortname
+    counties <- SSRqc::counties
+    # Ensure counties is available
+    if (!exists("counties")) {
+        stop("The 'counties' dataset could not be loaded.")
     }
-}
+    noDuplicatedInds <- !duplicated(importData[,individualColumn])
+    importDataUnique <- importData[noDuplicatedInds,]
+    importDataUnique[,countyColumn] <- counties[match(importDataUnique[,"Fylke"], names(counties))]
 
-#' Function to from the match database create import file according
-#' the standard given by rovbase
-#'
-#' @return a dataframe with the neccessary content for import to
-#' rovbase.
-#'
-#' @param fromMatchDB Dataframe with target data
-#'
-#'
-#' @param RBData Dataframe with metadata from rovbase for the samples
-#' in fromMatchDB
+    importDataUnique <- importDataUnique[order(importDataUnique[,"Fylke"]),]
+    importDataUnique <- importDataUnique %>%
+        group_by(.data[[countyColumn]]) %>%
+        #group_by(Fylke) %>%
+        mutate(TrivialID = paste0(.data[[countyColumn]], year, "-", sprintf("%03d", row_number()))) %>%
+        ungroup()
 
-CreateImport <- function(fromMatchDB, RBData) {
-        miss <- fromMatchDB$index[!fromMatchDB$index %in% RBData$Strekkode]
-        completeFile <- merge(fromMatchDB, RBData,
-                by.x = "index.x", by.y = "Strekkode"
-        )
-        nr <- nrow(completeFile)
-        res <- data.frame(
-                DNAID = completeFile$DNAID,
-                Strekkode = completeFile$index.x,
-                RovbaseID = completeFile$RBID.x,
-                ArtsID = rep(3, nr),
-                Prøvestatus = rep(1, nr),
-                KjønnID = completeFile$gender.x,
-                MetodeID = rep(18, nr),
-                VurderingID = rep(1, nr),
-                Kontrollstatus = rep(6, nr),
-                AnalysertAvID = rep(10, nr),
-                Merknad = rep("", nr),
-                Individ = completeFile$individ,
-                rbIND   = completeFile$Individ.x.x,
-                Lan     = completeFile$Fylke.x.x,
-                TrivialID = completeFile$TrivialID
-        )
-        sum <- list(
-                miss = miss,
-                res = res
-        )
-        return(sum)
-}
+    return(importDataUnique)
 
-WriteImportFile <- function(data = results, file = "toimportfinal.xlsx") {
-    openxlsx::write.xlsx(x = data, file = file, overwrite = FALSE)
     }
-
-
-createIndFile <- function(fromMatchDB) {
-    tempData  <- data.frame(IndividNavn = c(NA, NA, NA,
-                                            "IndividNavn"),
-                            Kjønn = c("1 = Hane",
-                                      "2 = Hona",
-                                      "3 = Okänt",
-                                      "Kjønn"))
-    nyInds <- fromMatchDB[startsWith(fromMatchDB$Individ,"NRM_"),
-                                        c("Individ", "Gender", "SVAID")]
-                    names(nyInds)  <- c("IndividNavn", "Kjønn")
-                    res <- rbind(tempData, nyInds)
-                    return(res)
-}
-

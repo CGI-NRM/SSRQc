@@ -1,9 +1,9 @@
-Name,MU59 - 1,MU59 - 2,G10L - 1,G10L - 2,MU05 - 1,MU05 - 2,ZFX - 1,ZFX – 2,Y318.2 - 1,Y318.2 – 2
+Name,MU59 - 1,MU59 - 2,G10L - 1,G10L - 2,MU05 - 1,MU05 - 2,ZFX - 1,ZFX – 2,Y318_2 - 1,Y318_2 – 2
 Blank_UarA,No peaks,No peaks,No peaks,No peaks,No peaks,No peaks,No peaks,No peaks,No peaks,No peaks
 Positive_UarA,246,248,178,188,123,123,160,160,235,235
-Sample-1_UarA_rep1,230,240,182,182,127,127,160,160,No peaks in locus,No peaks in locus
+Sample-1_UarA_rep1,230,240,182,182,127,127,160,160,Unbinned peaks, Unbinned peaks
 Sample-1_UarA_rep2,230,240,182,182,127,127,160,160,No peaks in locus,No peaks in locus
-Sample-1_UarA_rep3,230,240,182,182,127,127,160,160,No peaks in locus,No peaks in locus
+Sample-1_UarA_rep3,230,238,182,182,127,127,160,160,No peaks in locus,No peaks in locus
 Sample-2_UarA_rep1,230,240,182,182,127,127,160,160,No peaks in locus,No peaks in locus
 Sample-2_UarA_rep2,230,240,182,182,127,127,160,160,No peaks in locus,No peaks in locus
 Sample-2_UarA_rep3,230,240,182,182,127,127,160,160,No peaks in locus,No peaks in locus

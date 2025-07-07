@@ -6,19 +6,25 @@ Authors@R:
            family = "Källman",
            role = c("aut", "cre"),
            email = "thomas.kallman@nrm.se")
-Description: This package contains a small number of functions used to
+Description: This package contains a number of functions used to
     perform quality control of SSR data as well as extraction of data
-    from replicate runs.
+    from replicate runs. It also facilitate the creation of files for import of 
+    data to external databases.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Imports:
     readxl,
     readODS,
     stats,
-    utils
+    utils,
+    dplyr,
+    lubridate,
+    magrittr,
+    stringi,
+    openxlsx
 Suggests: 
     knitr,
     rmarkdown,

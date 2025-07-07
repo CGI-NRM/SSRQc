@@ -12,6 +12,8 @@ SexDetermination(
 \arguments{
 \item{data}{a dataframe with genotype results including loci that
 are linked to sex chromosomes}
+
+\item{locus}{a vector of loci that contains genotypes for sex determination.}
 }
 \value{
 list with input data plus QC score and a vector with most
@@ -39,8 +41,9 @@ The other markers that are y-chromosome markers have the following properties:
 }
 
 The third marker is found in both male and females and can not
-seperate between sex, but is used as a control that the sample can
-be analysed for sex chromosomes.
+separate between sexes, but is used as a control that the sample can
+be analysed for sex chromosomes. So strictly speaking a working sample irrespective of
+sex should have data on this marker.
 
 Consensus for this is the extracted as follows:
 \enumerate{
