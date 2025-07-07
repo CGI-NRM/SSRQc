@@ -14,6 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
+
 The SSRqc package have been developed to automate quality control of genotype data from the Swedish brown bear monitoring and hence have functions that are mostly specific to this project. In short the package allows for parsing replicates of genotype data (SSR data originally) and extract consensus genotypes score for samples. It also allows for extracting the sex of sampled individuals based on sex-specific genotype patterns. Furthermore it can take consensus genotypes and create files suitable for matching data against databases with known genotypes. Lastly it can use genotype data (from the a database) together with metadata to generate file formats accepted as import files in rovbase.
 
 To be useful in other projects there is a need to at least modify and adapt the following functions:
@@ -27,6 +28,7 @@ as they to some extent use project specific names and file formats.
 
 
 Loading the package should list any packages that you might have to install prior to using the package.
+
 
 ```{r setup}
 library(SSRqc)
@@ -85,6 +87,7 @@ sexDet <- SexDetermination(allData)
 allDataWithSex <- MergePlateS(allData, sexDet$Genotypes)
 ```
 
+
 The final step of the analysis is to generate input files that can be used for the shiny application GenotypeCheck. This can be done using the CreateMatchInput that combines metadata from rovbase with the genotype results. The current implementation assumes that a rovbase metadata file is available on your system and have the header as in the export from rovbase. It uses the LoadData function to import the metadata and during import it renames columns so they only contain valid ASCII characters that are valid in R names. This means that there are none of the special norwegian/swedish characters are retained in the column names.
 
 ```{r}
@@ -114,7 +117,6 @@ sampleImportResNew <- CreateSampleImport(matchDBFile = matchDBFile, metaDataFile
 # only known inds and the version suitable for manual curation
 sampleImportResKnown <- CreateSampleImport(matchDBFile = matchDBFile, metaDataFile = rovbasemetadata, year = 24, onlyNew = FALSE, methodID = 18, finalVersion = FALSE)
 
-
 ```
 
 
@@ -138,10 +140,3 @@ headerInfoFileInd <- system.file("extdata", "importfileIndividheader.xlsx", pack
 importSampleFile <- system.file("extdata", "sample_example1.xlsx", package = "SSRqc")
 WriteIndFile(headerInfoFile = headerInfoFileInd, importSampleFile = importSampleFile)
 ```
-
-
-
-
-
-
-
