@@ -35,7 +35,7 @@ library(lubridate)
 ```
 
 ## Import genotype results
-If you have a file with genotype results (from replicate runs). The easiest way to import the file is to use the CreateGenotype function. This needs a path to a file and a vector of loci names to be imported. import. For the function to work as intended it needs two columns of data for every loci, including sex markers, so markers with only one value needs to be duplicated before import.
+If you have a file with genotype results (from replicate runs). The easiest way to import the file is to use the CreateGenotype function. This needs a path to a file and a vector of loci names to be imported. For the function to work as intended it needs two columns of data for every loci, including sex markers, so markers with only one value needs to be duplicated before import.
 
 A file looking like the following can hence be imported with the CreateGenotype function.
 
